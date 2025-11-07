@@ -11,6 +11,7 @@ use App\Models\Category;
 use App\Models\Filter;
 use App\Models\FilterValue;
 use App\Models\CategoryRelationship;
+use App\Services\SparePartsCategoryService;
 use Carbon\Carbon;
 
 class CrawlPages extends Command
@@ -34,6 +35,45 @@ class CrawlPages extends Command
         'w95',
         'w140',
     ];
+    
+    private const GENERIC_SPARE_PARTS_CATEGORIES = [
+        'trunks-wheels',
+        'accumulators',
+        'audio-video',
+        'chargers',
+        'rear-view-cameras',
+        'signallings',
+        'candles',
+        'video-recorders',
+        'crankcase-protection',
+        'radar-detectors',
+        'all'
+    ];
+
+    /**
+     * Temporary ignore list for car brand URLs that should not be traversed further
+     */
+    private const IGNORED_CAR_BRAND_URLS = [
+        'https://www.ss.com/lv/transport/spare-parts/alfa-romeo/',
+        'https://www.ss.com/lv/transport/spare-parts/alpina/',
+        'https://www.ss.com/lv/transport/spare-parts/audi/',
+        'https://www.ss.com/lv/transport/spare-parts/austin/',
+        'https://www.ss.com/lv/transport/spare-parts/bentley/',
+        'https://www.ss.com/lv/transport/spare-parts/bmw/',
+        'https://www.ss.com/lv/transport/spare-parts/bugatti/',
+        'https://www.ss.com/lv/transport/spare-parts/buick/',
+        'https://www.ss.com/lv/transport/spare-parts/cadillac/',
+        'https://www.ss.com/lv/transport/spare-parts/chevrolet/',
+        'https://www.ss.com/lv/transport/spare-parts/chrysler/',
+        'https://www.ss.com/lv/transport/spare-parts/citroen/',
+        'https://www.ss.com/lv/transport/spare-parts/cupra/',
+        'https://www.ss.com/lv/transport/spare-parts/dacia/',
+        'https://www.ss.com/lv/transport/spare-parts/daewoo/',
+        'https://www.ss.com/lv/transport/spare-parts/daihatsu/',
+        'https://www.ss.com/lv/transport/spare-parts/daimler/',
+        'https://www.ss.com/lv/transport/spare-parts/dodge/',
+    ];
+
     private $baseUrl = 'https://www.ss.com';
     private $locale = 'lv';
     private $maxDepth = 20;
@@ -42,6 +82,7 @@ class CrawlPages extends Command
     private $visitedUrls = [];
     private $urlPath = [];
     private $pathKeys = [];
+    private $sparePartsService;
 
     /**
      * Create a new command instance.
@@ -56,6 +97,8 @@ class CrawlPages extends Command
                 'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
             ]
         ]);
+        
+        $this->sparePartsService = new SparePartsCategoryService();
     }
 
     /**
@@ -78,71 +121,6 @@ class CrawlPages extends Command
         $this->info("Crawling completed! Total execution time: {$duration}");
     }
 
-    // /**
-    //  * Test price filtering using the sid cookie
-    //  */
-    // private function testPriceFilteringWithSid()
-    // {
-    //     $this->info("=== Testing Price Filtering with SID Cookie ===");
-        
-    //     try {
-    //         // Step 1: Get initial page and extract sid cookie
-    //         $session = new \GuzzleHttp\Cookie\CookieJar();
-    //         $response = $this->client->get($this->baseUrl . '/lv/transport/cars/audi/', [
-    //             'cookies' => $session
-    //         ]);
-            
-    //         $this->info("Initial page status: " . $response->getStatusCode());
-            
-    //         // Step 2: Submit form with price filters to set the session
-    //         $postData = [
-    //             'topt[8][min]' => '10000',
-    //             'topt[8][max]' => '20000',
-    //             'topt[18][min]' => '2020',
-    //             'topt[18][max]' => '2023',
-    //         ];
-            
-    //         $response = $this->client->post($this->baseUrl . '/lv/transport/cars/audi/filter/', [
-    //             'form_params' => $postData,
-    //             'cookies' => $session,
-    //             'allow_redirects' => true,
-    //         ]);
-            
-    //         $this->info("Form submission status: " . $response->getStatusCode());
-            
-    //         // Step 3: Now access the page again with the same session
-    //         $response = $this->client->get($this->baseUrl . '/lv/transport/cars/audi/filter', [
-    //             'cookies' => $session
-    //         ]);
-            
-    //         $this->info("Return visit status: " . $response->getStatusCode());
-            
-    //         $crawler = new Crawler($response->getBody()->getContents());
-            
-    //         // Check if price values are now in the form fields
-    //         $minPriceField = $crawler->filter('input[name="topt[8][min]"]')->attr('value');
-    //         $maxPriceField = $crawler->filter('input[name="topt[8][max]"]')->attr('value');
-            
-    //         $this->info("Min price field value: '{$minPriceField}'");
-    //         $this->info("Max price field value: '{$maxPriceField}'");
-            
-    //         if ($minPriceField === '10000' || $maxPriceField === '20000') {
-    //             $this->info("✓ SUCCESS! Price values found in form fields!");
-    //             $this->info("This means price filtering works with session cookies!");
-    //             $this->extractCarListings($crawler);
-    //         } else {
-    //             $this->info("✗ Price values not found in form fields");
-    //         }
-            
-    //         // Step 4: Test if we can create filtered URLs using the session
-    //         $this->testFilteredUrlsWithSession($session);
-            
-    //     } catch (RequestException $e) {
-    //         $this->error("SID cookie test failed: " . $e->getMessage());
-    //     }
-    // }
-
-    
 
     /**
      * Extract page title from crawler
@@ -153,11 +131,11 @@ class CrawlPages extends Command
         if ($breadcrumbElement->count() > 0) {
             $breadcrumbText = $breadcrumbElement->text();
             
-            // Split by " / " and get the last part
+            // Split by / and get the last part
             $parts = explode(' / ', $breadcrumbText);
             if (count($parts) > 1) {
                 $lastPart = trim(end($parts));
-                // Remove any trailing text after the main title (like "img" tags)
+                // Remove any trailing text after the main title like img tags
                 $lastPart = preg_replace('/\s+<.*$/', '', $lastPart);
                 if (!empty($lastPart)) {
                     return $lastPart;
@@ -191,11 +169,9 @@ class CrawlPages extends Command
             ];
         });
 
-
-        // For testing speed purpose
         // $categories = array_slice($categories, 9, 1);
         // $categories = array_slice($categories, 1, 1);
-        
+
         $this->info("Found " . count($categories) . " categories");
 
         foreach ($categories as $category) {
@@ -220,14 +196,10 @@ class CrawlPages extends Command
      */
     private function crawlCategoryPage(string $url, int $parentId, int $depth): ?Crawler
     {
-        // Create a unique identifier for this URL + parent_id combination
         $visitKey = $url;
-        
-        // Add current URL and visit key to path for tracking
         $this->urlPath[] = $url;
         $this->pathKeys[] = $visitKey;
         
-        // Create path display string showing previous URLs with their visit keys
         $pathString = '';
         if (count($this->urlPath) > 1) {
             $pathParts = [];
@@ -239,54 +211,73 @@ class CrawlPages extends Command
         
         $this->info("Crawling category page: {$url} (depth: {$depth}){$pathString}");
         
-        // // Check for loops by looking for repeated URLs in the current path
+        if ($this->isInTransportSparePartSection($url)) {
+            $sparePartsDepth = $this->getSparePartsDepth($url);
+            if ($sparePartsDepth == 2) {
+                // Check if this is a generic spare parts category that should be processed normally
+                $isGenericCategory = $this->isGenericSparePartsCategory($url);
+                
+                if ($isGenericCategory) {
+                    $this->info("  -> Generic spare parts category detected, continuing normal crawling");
+                } else {
+                    $this->info("  -> Transport spare part section at depth 2, generating spare parts categories instead of crawling");
+                    
+                    // Generate spare parts categories dynamically for any car brand/model
+                    $this->info("  -> Generating spare parts categories for: {$url}");
+                    $this->generateSparePartsCategoriesForUrl($this->baseUrl . $url, $parentId);
+                    
+                    // Remove current URL from path before returning
+                    array_pop($this->urlPath);
+                    array_pop($this->pathKeys);
+                    return null;
+                }
+            }
+        }
+        
         $urlCount = array_count_values($this->urlPath);
         if ($urlCount[$url] > 1) {
             $this->info("  -> LOOP DETECTED: URL '{$url}' appears " . $urlCount[$url] . " times in current path, stopping");
-            // Remove current URL from path before returning
             array_pop($this->urlPath);
             array_pop($this->pathKeys);
             return null;
         }
         
-        // // Check if we've already visited this URL + parent_id combination
-        // if (isset($this->visitedUrls[$visitKey])) {
-        //     $this->info("  -> Already visited: {$url} with parent_id {$parentId}, skipping to prevent loop");
-        //     // Remove current URL from path before returning
-        //     array_pop($this->urlPath);
-        //     array_pop($this->pathKeys);
-        //     return null;
-        // }
-
-        // Mark this URL + parent_id combination as visited
-        $this->visitedUrls[$visitKey] = true;
-
-        if ($depth > $this->maxDepth) {
-            $this->info("  -> Max depth reached, stopping");
-            // Remove current URL from path before returning
+        if ($this->shouldIgnoreUrl($url)) {
+            $this->info("  -> IGNORED: URL '{$url}' is in the temporary ignore list, skipping");
+            array_pop($this->urlPath);
+            array_pop($this->pathKeys);
+            return null;
+        }
+        
+        if (isset($this->visitedUrls[$visitKey])) {
+            $this->info("  -> Already visited: {$url} with parent_id {$parentId}, skipping to prevent loop");
             array_pop($this->urlPath);
             array_pop($this->pathKeys);
             return null;
         }
 
+        $this->visitedUrls[$visitKey] = true;
+
+        if ($depth > $this->maxDepth) {
+            $this->info("  -> Max depth reached, stopping");
+            array_pop($this->urlPath);
+            array_pop($this->pathKeys);
+            return null;
+        }
 
         try {
             $response = $this->makeRequestWithRetry($this->baseUrl . $url);
             $crawler = new Crawler($response->getBody()->getContents());
 
-            // Check if this is an ads page
             if ($crawler->filter('#head_line')->count() > 0) {
                 $this->info("  -> Ads page detected");
                 
                 // Don't create the category here - it will be created by the parent caller
-                // Return the crawler for filter extraction
-                // Remove current URL from path before returning
                 array_pop($this->urlPath);
                 array_pop($this->pathKeys);
                 return $crawler;
             }
 
-            // Extract subcategories
             $subcategories = $crawler->filter('h4.category a')->each(function (Crawler $node) {
                 return [
                     'href' => $node->attr('href'),
@@ -295,7 +286,6 @@ class CrawlPages extends Command
                 ];
             });
 
-            // Filter out subcategories without href
             $subcategories = array_filter($subcategories, function ($subcategory) {
                 return !empty($subcategory['href']);
             });
@@ -307,57 +297,55 @@ class CrawlPages extends Command
                 
                 $fullUrl = $this->baseUrl . $subcategory['href'];
                 
-                // Check if this category already exists
                 $existingCategory = Category::where('url', $fullUrl)->first();
                 
                 if ($existingCategory) {
-                    // Category exists - check if we need to create a relationship
                     $this->info("      -> Category already exists (ID: {$existingCategory->id})");
                     
-                    // Check if there's already a relationship between parent and this category
                     $existingRelationship = CategoryRelationship::where('parent_id', $parentId)
                         ->where('child_id', $existingCategory->id)
                         ->first();
                     
                     if (!$existingRelationship) {
-                        // Create a cross-reference relationship
-                        CategoryRelationship::create([
+                        CategoryRelationship::updateOrCreate([
                             'parent_id' => $parentId,
                             'child_id' => $existingCategory->id,
                         ]);
-                        $this->info("      -> Created cross-reference relationship");
+                        $this->info("      -> Created/updated relationship");
                     } else {
                         $this->info("      -> Relationship already exists");
-                        continue;
                     }
                     
                     $subcategoryModel = $existingCategory;
-                } else {
-                    // Category doesn't exist - create it
-                    $subcategoryModel = Category::create([
-                        'url' => $fullUrl,
-                        'title' => $subcategory['text'],
-                        'type' => Category::TYPE_SUBCATEGORY,
-                    ]);
                     
-                    // Create the primary hierarchy relationship
-                    CategoryRelationship::create([
+                    if ($existingCategory->type === Category::TYPE_ADS) {
+                        $this->info("      -> Category is ads page, skipping recursive crawl");
+                        array_pop($this->urlPath);
+                        array_pop($this->pathKeys);
+                        continue;
+                    }
+                } else {
+                    $subcategoryModel = Category::updateOrCreate(
+                        ['url' => $fullUrl],
+                        [
+                            'title' => $subcategory['text'],
+                            'type' => Category::TYPE_SUBCATEGORY,
+                        ]
+                    );
+                    
+                    CategoryRelationship::updateOrCreate([
                         'parent_id' => $parentId,
                         'child_id' => $subcategoryModel->id,
                     ]);
                     
-                    $this->info("      -> Created new category (ID: {$subcategoryModel->id}) with hierarchy relationship");
+                    $this->info("      -> Created/updated category (ID: {$subcategoryModel->id})");
                 }
                 
-                // Now recursively crawl to see what this subcategory contains
                 $adsCrawler = $this->crawlCategoryPage($subcategory['href'], $subcategoryModel->id, $depth + 1);
                 
-                // Check if this subcategory is actually an ads page
                 if ($adsCrawler) {
-                    // This is an ads page - update the type and extract filters
                     $subcategoryModel->update(['type' => Category::TYPE_ADS]);
                     
-                    // Use the returned crawler to extract filters
                     try {
                         $this->extractFilters($adsCrawler, $subcategoryModel->id);
                     } catch (\Exception $e) {
@@ -365,11 +353,10 @@ class CrawlPages extends Command
                     }
                 }
                 
-                usleep(2 * 100000); 
+                // usleep(2 * 100000); 
             }
 
-            // Return null if we found subcategories to process (not an ads page)
-            // Remove current URL from path before returning
+            // Return null if found subcategories to process 
             array_pop($this->urlPath);
             array_pop($this->pathKeys);
             return null;
@@ -377,42 +364,11 @@ class CrawlPages extends Command
         } catch (RequestException $e) {
             $this->error("Failed to crawl category page {$url}: " . $e->getMessage());
             Log::error("Crawl error for {$url}: " . $e->getMessage());
-            // Remove current URL from path before returning
             array_pop($this->urlPath);
             array_pop($this->pathKeys);
             return null;
         }
     }
-
-    private function extractAdsFilters(Crawler $crawler, string $url, int $categoryId): array
-    {
-        $filters = [
-            'url' => $url,
-            'title' => $this->extractPageTitle($crawler),
-            'filters' => []
-        ];
-
-        $allFilters = $this->extractFilters($crawler, $categoryId);
-        dd($allFilters);
-        $filters['filters'] = $this->groupFiltersByTypeAndLabel($allFilters);
-
-        return $filters;
-    }
-
-    // private function groupFiltersByTypeAndLabel(array $allFilters): array
-    // {
-    //     $filters = [];
-
-    //     foreach ($allFilters as $filter) {
-    //         $filterType = $filter['type'];
-    //         if (!isset($filters['filters'][$filterType])) {
-    //             $filters['filters'][$filterType] = [];
-    //         }
-    //         $filters['filters'][$filterType][$filter['label']] = $filter;
-    //     }
-
-    //     return $filters;
-    // }
 
 
     private function extractFilters(Crawler $crawler, int $categoryId): array
@@ -425,12 +381,11 @@ class CrawlPages extends Command
 
     private function classifyAndExtractFilter(Crawler $cell, string $label, int $categoryId): ?array
     {
-        // Check for custom_range: text inputs with min/max
-                $minInput = $cell->filter('input[type="text"][name$="[min]"]');
-                $maxInput = $cell->filter('input[type="text"][name$="[max]"]');
-                
-                if ($minInput->count() > 0 || $maxInput->count() > 0) {
-                    $name = $this->extractFieldName($minInput->count() > 0 ? $minInput : $maxInput);
+        $minInput = $cell->filter('input[type="text"][name$="[min]"]');
+        $maxInput = $cell->filter('input[type="text"][name$="[max]"]');
+        
+        if ($minInput->count() > 0 || $maxInput->count() > 0) {
+            $name = $this->extractFieldName($minInput->count() > 0 ? $minInput : $maxInput);
 
             Filter::updateOrCreate([
                 'label' => $label,
@@ -453,13 +408,13 @@ class CrawlPages extends Command
         }
 
         // Check for select_range: select dropdowns with min/max
-                $minSelect = $cell->filter('select[name$="[min]"]');
-                $maxSelect = $cell->filter('select[name$="[max]"]');
-                
-                if ($minSelect->count() > 0 || $maxSelect->count() > 0) {
-                    $name = $this->extractFieldName($minSelect->count() > 0 ? $minSelect : $maxSelect);
-                    $minOptions = $minSelect->count() > 0 ? $this->extractSelectOptions($minSelect) : [];
-                    $maxOptions = $maxSelect->count() > 0 ? $this->extractSelectOptions($maxSelect) : [];
+        $minSelect = $cell->filter('select[name$="[min]"]');
+        $maxSelect = $cell->filter('select[name$="[max]"]');
+        
+        if ($minSelect->count() > 0 || $maxSelect->count() > 0) {
+            $name = $this->extractFieldName($minSelect->count() > 0 ? $minSelect : $maxSelect);
+            $minOptions = $minSelect->count() > 0 ? $this->extractSelectOptions($minSelect) : [];
+            $maxOptions = $maxSelect->count() > 0 ? $this->extractSelectOptions($maxSelect) : [];
                     
             $selectRangeFilter = Filter::updateOrCreate([
                 'label' => $label,
@@ -502,13 +457,13 @@ class CrawlPages extends Command
             }
 
             return [
-                        'type' => 'select_range',
-                        'name' => $name,
-                        'label' => $label,
-                        'min_options' => $minOptions,
-                        'max_options' => $maxOptions
-                    ];
-                }
+                'type' => 'select_range',
+                'name' => $name,
+                'label' => $label,
+                'min_options' => $minOptions,
+                'max_options' => $maxOptions
+            ];
+        }
 
         // Check for custom_text: single text input without min/max
         $textInput = $cell->filter('input[type="text"]:not([name$="[min]"]):not([name$="[max]"])');
@@ -583,14 +538,6 @@ class CrawlPages extends Command
                 ];
 
             }
-
-            // if (!empty($options)) {
-            //     $onChange = $select->attr('onchange');
-            //     $type = ($onChange && strpos($onChange, 'this.form.submit()') !== false) 
-            //         ? 'form_select' 
-            //         : 'select';
-                
-                // }
         }
 
         return null;
@@ -609,7 +556,6 @@ class CrawlPages extends Command
                 $label = $this->extractFilterLabel($cell);
                 if (!$label) return;
                 
-                // Classify and extract the filter based on its structure
                 $filter = $this->classifyAndExtractFilter($cell, $label, $categoryId);
 
                 if ($filter) {
@@ -822,9 +768,7 @@ class CrawlPages extends Command
         });
     }
 
-    /**
-     * Make HTTP request with retry mechanism and exponential backoff
-     */
+
     private function makeRequestWithRetry(string $url, int $maxRetries = 5): \Psr\Http\Message\ResponseInterface
     {
         $lastException = null;
@@ -835,7 +779,6 @@ class CrawlPages extends Command
                 
                 $response = $this->client->get($url);
                 
-                // If successful, return immediately
                 if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 300) {
                     $this->info("Request successful: {$url}");
                     return $response;
@@ -875,7 +818,6 @@ class CrawlPages extends Command
             }
         }
         
-        // If all retries failed, log the error and throw
         $this->error("All retry attempts failed for {$url}. Last error: " . $lastException->getMessage());
         Log::error("HTTP request failed after {$maxRetries} attempts", [
             'url' => $url,
@@ -893,6 +835,78 @@ class CrawlPages extends Command
     {
         $delays = [30, 60, 180, 360, 720, 1440];
         return $delays[min($attempt - 1, count($delays) - 1)];
+    }
+
+
+    private function isInTransportSparePartSection(string $url): bool
+    {
+        return preg_match('/\/transport\/spare-parts\//', $url) === 1;
+    }
+
+
+    private function isGenericSparePartsCategory(string $url): bool
+    {
+        foreach (self::GENERIC_SPARE_PARTS_CATEGORIES as $category) {
+            if (strpos($url, '/' . $category . '/') !== false) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function shouldIgnoreUrl(string $url): bool
+    {
+        $fullUrl = $this->baseUrl . $url;
+        
+        foreach (self::IGNORED_CAR_BRAND_URLS as $ignoredUrl) {
+            if ($fullUrl === $ignoredUrl) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Generate spare parts categories for a given URL 
+     */
+    private function generateSparePartsCategoriesForUrl(string $url, int $parentId)
+    {
+        $this->info("=== Generating spare parts categories for: {$url} ===");
+        
+        try {
+            $createdCategories = $this->sparePartsService->generateSparePartsCategories($url, $parentId);
+            $this->info("=== Spare parts categories generation completed ===");
+            $this->info("Created " . count($createdCategories) . " categories with parent relationship to ID: {$parentId}");
+        } catch (\Exception $e) {
+            $this->error("Failed to generate spare parts categories: " . $e->getMessage());
+            Log::error("Spare parts generation error for {$url}: " . $e->getMessage());
+        }
+    }
+
+
+    private function getSparePartsDepth(string $url): int
+    {
+        $sparePartsPos = strpos($url, '/spare-parts/');
+        if ($sparePartsPos === false) {
+            return 0;
+        }
+        
+        $afterSpareParts = substr($url, $sparePartsPos + strlen('/spare-parts/'));
+        
+        $afterSpareParts = rtrim($afterSpareParts, '/');
+        
+        if (empty($afterSpareParts)) {
+            return 0;
+        }
+        
+        $segments = explode('/', $afterSpareParts);
+        
+        $segments = array_filter($segments, function($segment) {
+            return !empty($segment);
+        });
+        
+        return count($segments);
     }
   
 }
