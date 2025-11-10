@@ -61,6 +61,11 @@ class Category extends Model
         )->withTimestamps();
     }
 
+    public function primaryParent(): ?Category
+    {
+        return $this->relatedParents()->first();
+    }
+
     /**
      * Get all direct and related children (primary + cross-references).
      */
@@ -109,14 +114,37 @@ class Category extends Model
     public function getFullPathAttribute(): string
     {
         $path = collect([$this->title]);
-        $parent = $this->parent;
+        $parent = $this->primaryParent();
 
         while ($parent) {
             $path->prepend($parent->title);
-            $parent = $parent->parent;
+            $parent = $parent->primaryParent();
         }
 
         return $path->filter()->implode(' > ');
     }
 
+    public function getBreadcrumbsAttribute(): array
+    {
+        $breadcrumbs = [];
+        $current = $this;
+        $seen = [];
+
+        while ($current) {
+            if (in_array($current->id, $seen, true)) {
+                break;
+            }
+
+            $seen[] = $current->id;
+
+            array_unshift($breadcrumbs, [
+                'id' => $current->id,
+                'title' => $current->title,
+            ]);
+
+            $current = $current->primaryParent();
+        }
+
+        return $breadcrumbs;
+    }
 }
