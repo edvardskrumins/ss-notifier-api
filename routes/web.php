@@ -2,19 +2,13 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\EmailTest;
-
-Route::get('/', function () {
-    return view('welcome');
-});
+use App\Http\Controllers\Auth\VerifyEmailLinkController;
 
 
-// Route::get('/send', action:function() {
-//     Mail::to(users:'edvardskrumins@gmail.com')->send(new \App\Mail\EmailTest());
-// });
-
-
-Route::get('/send', function () {
-    Mail::to('edvardskrumins@gmail.com')->send(new EmailTest());
-    return 'Email sent';
-});
+Route::get('/email/verify/{id}/{hash}', VerifyEmailLinkController::class)
+    ->middleware([
+        'auth:'.config('fortify.guard', 'web'),
+        'signed',
+        'throttle:'.config('fortify.limiters.verification', '6,1'),
+    ])
+    ->name('verification.verify');
