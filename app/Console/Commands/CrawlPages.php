@@ -363,7 +363,7 @@ class CrawlPages extends Command
 
         } catch (RequestException $e) {
             $this->error("Failed to crawl category page {$url}: " . $e->getMessage());
-            Log::error("Crawl error for {$url}: " . $e->getMessage());
+            Log::channel('worker')->error("Crawl error for {$url}: " . $e->getMessage());
             array_pop($this->urlPath);
             array_pop($this->pathKeys);
             return null;
@@ -819,7 +819,7 @@ class CrawlPages extends Command
         }
         
         $this->error("All retry attempts failed for {$url}. Last error: " . $lastException->getMessage());
-        Log::error("HTTP request failed after {$maxRetries} attempts", [
+        Log::channel('worker')->error("HTTP request failed after {$maxRetries} attempts", [
             'url' => $url,
             'error' => $lastException->getMessage(),
             'attempts' => $maxRetries
@@ -880,7 +880,7 @@ class CrawlPages extends Command
             $this->info("Created " . count($createdCategories) . " categories with parent relationship to ID: {$parentId}");
         } catch (\Exception $e) {
             $this->error("Failed to generate spare parts categories: " . $e->getMessage());
-            Log::error("Spare parts generation error for {$url}: " . $e->getMessage());
+            Log::channel('worker')->error("Spare parts generation error for {$url}: " . $e->getMessage());
         }
     }
 

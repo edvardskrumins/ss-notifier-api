@@ -36,6 +36,7 @@ class SyncAds extends Command
     public function handle()
     {
         $this->info('Starting ad sync for active notifications...');
+        Log::channel('worker')->info('Starting ad sync for active notifications...');
 
         $notifications = AdNotification::where('active', true)
             ->with(['category', 'user', 'filters.filter', 'filters.filterValue'])
@@ -53,7 +54,7 @@ class SyncAds extends Command
                 $this->processNotification($notification);
             } catch (\Exception $e) {
                 $this->error("Error processing notification ID {$notification->id}: " . $e->getMessage());
-                Log::error("SyncAds: Error processing notification {$notification->id}", [
+                Log::channel('worker')->error("SyncAds: Error processing notification {$notification->id}", [
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString()
                 ]);
@@ -294,7 +295,7 @@ class SyncAds extends Command
                 $this->error("Response status: " . $e->getResponse()->getStatusCode());
                 $this->error("Response body: " . $e->getResponse()->getBody()->getContents());
             }
-            Log::error("SyncAds: Request failed for notification {$notification->id}", [
+            Log::channel('worker')->error("SyncAds: Request failed for notification {$notification->id}", [
                 'url' => $fullUrl ?? $urlPath,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -302,7 +303,7 @@ class SyncAds extends Command
             return null;
         } catch (\Exception $e) {
             $this->error("Unexpected error: " . $e->getMessage());
-            Log::error("SyncAds: Unexpected error for notification {$notification->id}", [
+            Log::channel('worker')->error("SyncAds: Unexpected error for notification {$notification->id}", [
                 'url' => $fullUrl ?? $urlPath,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -354,7 +355,7 @@ class SyncAds extends Command
 
         } catch (\Exception $e) {
             $this->error("Error parsing ads: " . $e->getMessage());
-            Log::error("SyncAds: Error parsing ads for notification {$notification->id}", [
+            Log::channel('worker')->error("SyncAds: Error parsing ads for notification {$notification->id}", [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -393,7 +394,7 @@ class SyncAds extends Command
             
             if (!$user) {
                 $this->warn("User {$notification->user_id} not found. Skipping email.");
-                Log::warning("SyncAds: User not found for notification {$notification->id}", [
+                Log::channel('worker')->warning("SyncAds: User not found for notification {$notification->id}", [
                     'user_id' => $notification->user_id
                 ]);
                 return;
@@ -401,7 +402,7 @@ class SyncAds extends Command
             
             if (empty($user->email)) {
                 $this->warn("User {$notification->user_id} has no email address. Skipping email.");
-                Log::warning("SyncAds: User has no email for notification {$notification->id}", [
+                Log::channel('worker')->warning("SyncAds: User has no email for notification {$notification->id}", [
                     'user_id' => $notification->user_id,
                     'user_email' => $user->email
                 ]);
@@ -494,7 +495,7 @@ class SyncAds extends Command
             });
 
             $this->info("✓ Email sent successfully to {$user->email}");
-            Log::info("SyncAds: Email sent successfully", [
+            Log::channel('worker')->info("SyncAds: Email sent successfully", [
                 'notification_id' => $notification->id,
                 'user_id' => $user->id,
                 'user_email' => $user->email,
@@ -504,7 +505,7 @@ class SyncAds extends Command
         } catch (\Exception $e) {
             $this->error("✗ Error sending email: " . $e->getMessage());
             $this->error("Stack trace: " . $e->getTraceAsString());
-            Log::error("SyncAds: Error sending email for notification {$notification->id}", [
+            Log::channel('worker')->error("SyncAds: Error sending email for notification {$notification->id}", [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'user_id' => $notification->user_id,

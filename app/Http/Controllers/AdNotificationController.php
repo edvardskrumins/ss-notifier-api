@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateAdNotificationRequest;
 use App\Http\Resources\AdNotificationResource;
 use App\Models\AdNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class AdNotificationController extends Controller
 {
@@ -42,6 +43,7 @@ class AdNotificationController extends Controller
      */
     public function toggleActive(ToggleAdNotificationRequest $request, AdNotification $adNotification)
     {
+        Log::info('ToggleActive', ['adNotification' => $adNotification]);
         $adNotification->toggleActive();
 
         return new AdNotificationResource($adNotification->load(['category', 'filters.filter', 'filters.filterValue']));

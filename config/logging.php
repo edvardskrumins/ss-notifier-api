@@ -3,6 +3,7 @@
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
+use Monolog\Formatter\JsonFormatter;
 use Monolog\Processor\PsrLogMessageProcessor;
 
 return [
@@ -59,8 +60,12 @@ return [
         ],
 
         'single' => [
-            'driver' => 'single',
-            'path' => storage_path('logs/laravel.log'),
+            'driver' => 'monolog',
+            'handler' => StreamHandler::class,
+            'handler_with' => [
+                'stream' => storage_path('logs/laravel.log'),
+            ],
+            'formatter' => JsonFormatter::class,
             'level' => env('LOG_LEVEL', 'debug'),
             'replace_placeholders' => true,
         ],
@@ -125,6 +130,28 @@ return [
 
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
+        ],
+
+        'worker' => [
+            'driver' => 'monolog',
+            'handler' => StreamHandler::class,
+            'handler_with' => [
+                'stream' => storage_path('logs/worker.log'),
+            ],
+            'formatter' => JsonFormatter::class,
+            'level' => env('LOG_LEVEL', 'debug'),
+            'replace_placeholders' => true,
+        ],
+
+        'api' => [
+            'driver' => 'monolog',
+            'handler' => StreamHandler::class,
+            'handler_with' => [
+                'stream' => storage_path('logs/api.log'),
+            ],
+            'formatter' => JsonFormatter::class,
+            'level' => env('LOG_LEVEL', 'debug'),
+            'replace_placeholders' => true,
         ],
 
     ],
