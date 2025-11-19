@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StartNotificationRequest;
+use App\Http\Resources\AdNotificationResource;
 use App\Http\Resources\CategoryResource;
 use App\Http\Resources\FilterResource;
 use App\Models\Category;
+use Illuminate\Support\Facades\Log;
 
 class CategoryController extends Controller
 {
@@ -40,5 +43,19 @@ class CategoryController extends Controller
                 'category' => new CategoryResource($category),
             ],
         ]);
+    }
+
+    public function startNotifications(StartNotificationRequest $request, Category $category)
+    {
+        $validated = $request->validated();
+        $user = $request->user();
+
+        $adNotification = $category->createAdNotification(
+            $user->id,
+            $validated['name'],
+            $validated['filters'] ?? []
+        );
+
+        return new AdNotificationResource($adNotification);
     }
 }

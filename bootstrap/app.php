@@ -20,4 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
+    })
+    ->withSchedule(function ($schedule): void {
+        $schedule->command('ss:sync-ads')->everyMinute();
     })->create();

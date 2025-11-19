@@ -36,6 +36,14 @@ class Category extends Model
     }
 
     /**
+     * Get the ad notifications for this category.
+     */
+    public function adNotifications(): HasMany
+    {
+        return $this->hasMany(AdNotification::class);
+    }
+
+    /**
      * Get all categories that are related to this one as children (via relationships table).
      */
     public function relatedChildren(): BelongsToMany
@@ -146,5 +154,75 @@ class Category extends Model
         }
 
         return $breadcrumbs;
+    }
+
+    /**
+     * Create a new ad notification with filters for this category.
+     *
+     * @param int $userId The user creating the notification
+     * @param string $name The name of the notification
+     * @param array $filters Array of filter selections with structure:
+     *   - filter_id: int
+     *   - label: string
+     *   - value: string|array (string for single values, array with 'from'/'to' for ranges)
+     *   - filter_value_id: int|null
+     * @return AdNotification
+     */
+    public function createAdNotification(int $userId, string $name, array $filters = []): AdNotification
+    {
+        // Create the ad notification (active defaults to true)
+        $adNotification = AdNotification::create([
+            'user_id' => $userId,
+            'category_id' => $this->id,
+            'name' => $name,
+        ]);
+
+        // Process and create filter records - simple: just store all values
+        foreach ($filters as $filterData) {
+            $filterId = $filterData['filter_id'];
+            $value = $filterData['value'] ?? null;
+
+            // Check if this is a range filter (has 'from' and/or 'to' keys)
+            if (is_array($value) && (isset($value['from']) || isset($value['to']))) {
+                // Range filter - create separate records for 'from' and 'to' values
+                if (isset($value['from']['value']) && $value['from']['value'] !== null && $value['from']['value'] !== '') {
+                    AdNotificationFilter::create([
+                        'ad_notification_id' => $adNotification->id,
+                        'user_id' => $userId,
+                        'filter_id' => $filterId,
+                        'value' => (string) $value['from']['value'],
+                        'filter_value_id' => $value['from']['filter_value_id'] ?? null,
+                        'is_min' => true, // 'from' is the minimum value
+                    ]);
+                }
+
+                if (isset($value['to']['value']) && $value['to']['value'] !== null && $value['to']['value'] !== '') {
+                    AdNotificationFilter::create([
+                        'ad_notification_id' => $adNotification->id,
+                        'user_id' => $userId,
+                        'filter_id' => $filterId,
+                        'value' => (string) $value['to']['value'],
+                        'filter_value_id' => $value['to']['filter_value_id'] ?? null,
+                        'is_min' => false, // 'to' is the maximum value
+                    ]);
+                }
+            } else {
+                // Single value filter
+                $stringValue = is_string($value) ? $value : (string) $value;
+                
+                if ($stringValue !== null && $stringValue !== '') {
+                    AdNotificationFilter::create([
+                        'ad_notification_id' => $adNotification->id,
+                        'user_id' => $userId,
+                        'filter_id' => $filterId,
+                        'value' => $stringValue,
+                        'filter_value_id' => $filterData['filter_value_id'] ?? null,
+                        'is_min' => null, // Single value, not a range
+                    ]);
+                }
+            }
+        }
+
+        return $adNotification->load(['category', 'filters']);
     }
 }
