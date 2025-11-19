@@ -408,16 +408,89 @@ class SyncAds extends Command
                 return;
             }
 
+            // Make adUrl a full URL
+            $fullAdUrl = $adUrl;
+            if (strpos($adUrl, 'http') !== 0) {
+                $fullAdUrl = $this->baseUrl . '/' . ltrim($adUrl, '/');
+            }
+
+            // Fetch the ad page to extract details
+            $adImage = null;
+            $adDescription = null;
+            $adOptionsList = null;
+
+            try {
+                $cookieJar = new CookieJar();
+                $adPageResponse = $this->client->get($fullAdUrl, [
+                    'cookies' => $cookieJar,
+                    'headers' => $this->getCommonHeaders($fullAdUrl),
+                    'allow_redirects' => true,
+                ]);
+
+                $adHtml = $adPageResponse->getBody()->getContents();
+                $adCrawler = new Crawler($adHtml);
+
+                // Extract image - try #msg_img_img first, then fall back to first gallery thumbnail
+                $imageElement = $adCrawler->filter('#msg_img_img');
+                if ($imageElement->count() > 0) {
+                    $adImage = $imageElement->attr('src');
+                } else {
+                    // Try to get first image from gallery thumbnails
+                    $firstThumbnail = $adCrawler->filter('.pic_dv_thumbnail a')->first();
+                    if ($firstThumbnail->count() > 0) {
+                        $adImage = $firstThumbnail->attr('href');
+                    }
+                }
+
+                // Extract description
+                $descriptionElement = $adCrawler->filter('#msg_div_msg');
+                if ($descriptionElement->count() > 0) {
+                    // Get inner HTML, but remove the options_list table and msg_div_spec (we'll get options_list separately)
+                    $descriptionHtml = $descriptionElement->html();
+                    // Remove the options_list table from description
+                    $descriptionHtml = preg_replace('/<table[^>]*class="options_list"[^>]*>.*?<\/table>/is', '', $descriptionHtml);
+                    // Remove msg_div_spec div
+                    $descriptionHtml = preg_replace('/<div[^>]*id="msg_div_spec"[^>]*>.*?<\/div>/is', '', $descriptionHtml);
+                    // Remove the price table that comes after msg_div_spec
+                    $descriptionHtml = preg_replace('/<table[^>]*style="border-top:1px[^>]*>.*?<\/table>/is', '', $descriptionHtml);
+                    $adDescription = trim($descriptionHtml);
+                }
+
+                // Extract options list table
+                $optionsListElement = $adCrawler->filter('.options_list');
+                if ($optionsListElement->count() > 0) {
+                    $adOptionsList = $optionsListElement->outerHtml();
+                }
+            } catch (\Exception $e) {
+                $this->warn("Failed to fetch ad details: " . $e->getMessage());
+                // Continue with email even if we can't fetch details
+            }
+
             $subject = "SS-notifier: {$notification->name}";
-            $message = "Jauns sludinājums atbilst jūsu meklēšanas kritērijiem!\n\n";
-            $message .= "Skatīt sludinājumu: {$adUrl}\n\n";
-            $message .= "Meklēšanas nosaukums: {$notification->name}";
+            
+            // Build HTML email
+            $htmlMessage = "<h2>Jauns sludinājums atbilst jūsu meklēšanas kritērijiem!</h2>";
+            $htmlMessage .= "<p><strong>Meklēšanas nosaukums:</strong> {$notification->name}</p>";
+            $htmlMessage .= "<p><a href=\"{$fullAdUrl}\">Skatīt sludinājumu</a></p>";
+
+            if ($adImage) {
+                $htmlMessage .= "<p><img src=\"{$adImage}\" alt=\"Ad image\" style=\"max-width: 100%; height: auto;\"></p>";
+            }
+
+            if ($adOptionsList) {
+                $htmlMessage .= "<div>{$adOptionsList}</div>";
+            }
+
+            if ($adDescription) {
+                $htmlMessage .= "<div>{$adDescription}</div>";
+            }
 
             $this->info("Attempting to send email to {$user->email} for notification {$notification->id}");
 
-            Mail::raw($message, function ($mail) use ($user, $subject) {
+            Mail::send([], [], function ($mail) use ($user, $subject, $htmlMessage) {
                 $mail->to($user->email)
-                     ->subject($subject);
+                     ->subject($subject)
+                     ->html($htmlMessage);
             });
 
             $this->info("✓ Email sent successfully to {$user->email}");
@@ -425,7 +498,7 @@ class SyncAds extends Command
                 'notification_id' => $notification->id,
                 'user_id' => $user->id,
                 'user_email' => $user->email,
-                'ad_url' => $adUrl
+                'ad_url' => $fullAdUrl
             ]);
 
         } catch (\Exception $e) {
