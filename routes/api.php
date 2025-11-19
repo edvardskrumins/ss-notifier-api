@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\AdNotificationController;
 
 // Route::prefix('categories')->group(function () {
 //     Route::get('/', [CategoryController::class, 'index']);
@@ -22,6 +23,13 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::get('{category}/subcategories', [CategoryController::class, 'subcategories']);
         Route::get('{category}/ads', [CategoryController::class, 'ads']);
         Route::post('{category}/start-notifications', [CategoryController::class, 'startNotifications']);
+    });
+
+    Route::prefix('ad-notifications')->group(function () {
+        Route::get('/', [AdNotificationController::class, 'index']);
+        Route::get('{adNotification}', [AdNotificationController::class, 'show']);
+        Route::patch('{adNotification}/toggle-active', [AdNotificationController::class, 'toggleActive']);
+        Route::put('{adNotification}', [AdNotificationController::class, 'update']);
     });
 });
 
