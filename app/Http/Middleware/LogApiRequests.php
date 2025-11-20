@@ -77,7 +77,6 @@ class LogApiRequests
                 'headers' => $requestData['headers'],
                 'query' => $requestData['query'],
                 'body' => $requestData['body'],
-                'raw_body' => $requestData['raw_body'],
             ],
             'response' => [
                 'status_code' => $response->getStatusCode(),

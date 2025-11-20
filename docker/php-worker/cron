@@ -1,0 +1,3 @@
+* * * * * /usr/local/bin/php /var/www/html/artisan schedule:run 2>&1 | tee -a /var/www/html/storage/logs/cron.log
+# empty line needed for cron to work
+

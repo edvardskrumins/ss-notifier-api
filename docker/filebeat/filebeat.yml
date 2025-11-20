@@ -1,0 +1,68 @@
+filebeat.inputs:
+  - type: filestream
+    id: laravel-logs
+    enabled: true
+    paths:
+      - /var/www/html/storage/logs/laravel.log*
+    exclude_files: ['worker.log*', 'cron.log*', 'api.log*']
+    parsers:
+      - ndjson:
+          keys_under_root: true
+          add_error_key: true
+          message_key: message
+    fields:
+      log_type: app
+      source: laravel
+      environment: production
+    fields_under_root: true
+    tags: ["laravel", "application"]
+
+  - type: filestream
+    id: worker-logs
+    enabled: true
+    paths:
+      - /var/www/html/storage/logs/worker.log*
+    parsers:
+      - ndjson:
+          keys_under_root: true
+          add_error_key: true
+          message_key: message
+    fields:
+      log_type: worker
+      source: queue
+    fields_under_root: true
+    tags: ["worker", "queue"]
+
+  - type: filestream
+    id: api-logs
+    enabled: true
+    paths:
+      - /var/www/html/storage/logs/api.log*
+    parsers:
+      - ndjson:
+          keys_under_root: true
+          add_error_key: true
+          message_key: message
+    fields:
+      log_type: api
+      source: http
+    fields_under_root: true
+    tags: ["api", "http"]
+
+output.elasticsearch:
+  hosts: ["elasticsearch:9200"]
+  indices:
+    - index: "app-logs-%{+yyyy.MM.dd}"
+      when.equals:
+        log_type: app
+    - index: "worker-logs-%{+yyyy.MM.dd}"
+      when.equals:
+        log_type: worker
+    - index: "api-logs-%{+yyyy.MM.dd}"
+      when.equals:
+        log_type: api
+
+processors:
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+

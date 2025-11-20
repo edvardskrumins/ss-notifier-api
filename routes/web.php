@@ -15,3 +15,7 @@ Route::get('/email/verify/{id}/{hash}', VerifyEmailLinkController::class)
 Route::get('/reset-password/{token}', ResetPasswordLinkController::class)
     ->middleware('guest')
     ->name('password.reset');
+
+Route::get('/', function () {
+    return 'API is running';
+});
