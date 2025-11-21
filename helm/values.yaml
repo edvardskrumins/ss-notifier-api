@@ -30,7 +30,7 @@ postgresql:
   imageTag: "18.0"
   database: "ss_notifier"
   username: "ss_notifier"
-  storageSize: "20Gi"
+  storageSize: "50Gi"
 
 redis:
   imageTag: "8.2.1"
