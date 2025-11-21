@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ss-notifier-api.name" . }}-postgresql
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "ss-notifier-api.labels" . | nindent 4 }}
+    component: postgresql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "ss-notifier-api.selectorLabels" . | nindent 6 }}
+      component: postgresql
+  template:
+    metadata:
+      labels:
+        {{- include "ss-notifier-api.selectorLabels" . | nindent 8 }}
+        component: postgresql
+    spec:
+      containers:
+      - name: postgresql
+        image: postgres:{{ .Values.postgresql.imageTag }}
+        env:
+        - name: POSTGRES_DB
+          value: {{ .Values.postgresql.database }}
+        - name: POSTGRES_USER
+          value: {{ .Values.postgresql.username }}
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "ss-notifier-api.name" . }}-postgresql
+              key: password
+        ports:
+        - name: postgresql
+          containerPort: 5432
+        volumeMounts:
+        - name: postgresql-data
+          mountPath: /var/lib/postgresql/data
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+      volumes:
+      - name: postgresql-data
+        persistentVolumeClaim:
+          claimName: {{ include "ss-notifier-api.name" . }}-postgresql
+

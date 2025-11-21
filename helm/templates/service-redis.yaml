@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ss-notifier-api.name" . }}-redis
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "ss-notifier-api.labels" . | nindent 4 }}
+    component: redis
+spec:
+  type: ClusterIP
+  ports:
+  - port: 6379
+    targetPort: redis
+    protocol: TCP
+    name: redis
+  selector:
+    {{- include "ss-notifier-api.selectorLabels" . | nindent 4 }}
+    component: redis
+

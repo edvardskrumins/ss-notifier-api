@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ss-notifier-api.name" . }}-nginx
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "ss-notifier-api.labels" . | nindent 4 }}
+    component: nginx
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+  - port: {{ .Values.service.port }}
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    {{- include "ss-notifier-api.selectorLabels" . | nindent 4 }}
+    component: nginx
+

@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ss-notifier-api.name" . }}-nginx
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "ss-notifier-api.labels" . | nindent 4 }}
+    component: nginx
+spec:
+  replicas: {{ .Values.nginx.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "ss-notifier-api.selectorLabels" . | nindent 6 }}
+      component: nginx
+  template:
+    metadata:
+      labels:
+        {{- include "ss-notifier-api.selectorLabels" . | nindent 8 }}
+        component: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: {{ include "ss-notifier-api.nginxImage" . }}
+        imagePullPolicy: {{ .Values.nginx.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+

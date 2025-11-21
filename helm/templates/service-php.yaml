@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ss-notifier-api.name" . }}-php
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "ss-notifier-api.labels" . | nindent 4 }}
+    component: php
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9000
+    targetPort: php-fpm
+    protocol: TCP
+    name: php-fpm
+  selector:
+    {{- include "ss-notifier-api.selectorLabels" . | nindent 4 }}
+    component: php
+

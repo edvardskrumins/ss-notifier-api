@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME_API: ${{ github.repository }}/ss-notifier-api
+  IMAGE_NAME_PHP: ${{ github.repository }}/ss-notifier-php
   IMAGE_NAME_NGINX: ${{ github.repository }}/ss-notifier-api-nginx
   IMAGE_NAME_WORKER: ${{ github.repository }}/ss-notifier-api-worker
   IMAGE_NAME_FILEBEAT: ${{ github.repository }}/ss-notifier-api-filebeat
@@ -34,24 +34,24 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata for API image
-        id: meta-api
+      - name: Extract metadata for PHP image
+        id: meta-php
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_API }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_PHP }}
           tags: |
             type=ref,event=branch
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build and push API image
+      - name: Build and push PHP image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./docker/php/Dockerfile
           push: true
-          tags: ${{ steps.meta-api.outputs.tags }}
-          labels: ${{ steps.meta-api.outputs.labels }}
+          tags: ${{ steps.meta-php.outputs.tags }}
+          labels: ${{ steps.meta-php.outputs.labels }}
 
       - name: Extract metadata for Nginx image
         id: meta-nginx
@@ -128,3 +128,21 @@ jobs:
           push: true
           tags: ${{ steps.meta-kibana.outputs.tags }}
           labels: ${{ steps.meta-kibana.outputs.labels }}
+
+  deploy:
+    runs-on: self-hosted
+    needs: build
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy Helm chart
+        run: |
+          helm upgrade --install ss-notifier-api ./helm \
+            --namespace ss-notifier \
+            --create-namespace \
+            --wait \
+            --timeout 10m

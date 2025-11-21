@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ss-notifier-api.name" . }}-config
+  namespace: {{ .Values.namespace }}
+data:
+  APP_NAME: "SS-Notifier"
+  APP_ENV: "production"
+  APP_DEBUG: "false"
+  APP_URL: "https://ss-notifier-api.edvardskrumins.com"
+  
+  APP_LOCALE: "en"
+  APP_FALLBACK_LOCALE: "en"
+  APP_FAKER_LOCALE: "en_US"
+  
+  APP_MAINTENANCE_DRIVER: "file"
+  PHP_CLI_SERVER_WORKERS: "4"
+  BCRYPT_ROUNDS: "12"
+  
+  LOG_CHANNEL: "stack"
+  LOG_STACK: "single"
+  LOG_DEPRECATIONS_CHANNEL: "null"
+  LOG_LEVEL: "info"
+  
+  DB_CONNECTION: "pgsql"
+  DB_HOST: "{{ include "ss-notifier-api.name" . }}-postgresql"
+  DB_PORT: "5432"
+  DB_DATABASE: "{{ .Values.postgresql.database }}"
+  DB_USERNAME: "{{ .Values.postgresql.username }}"
+  
+  SESSION_DRIVER: "database"
+  SESSION_LIFETIME: "120"
+  SESSION_ENCRYPT: "false"
+  SESSION_PATH: "/"
+  SESSION_DOMAIN: ".edvardskrumins.com"
+  SANCTUM_STATEFUL_DOMAINS: "ss-notifier-api.edvardskrumins.com"
+  SESSION_SECURE_COOKIE: "true"
+  
+  BROADCAST_CONNECTION: "log"
+  FILESYSTEM_DISK: "local"
+  QUEUE_CONNECTION: "redis"
+  
+  CACHE_STORE: "redis"
+  MEMCACHED_HOST: "127.0.0.1"
+  
+  REDIS_CLIENT: "phpredis"
+  REDIS_HOST: "{{ include "ss-notifier-api.name" . }}-redis"
+  REDIS_PORT: "6379"
+  
+  MAIL_MAILER: "mailgun"
+  MAIL_SCHEME: "null"
+  MAIL_HOST: "smtp.eu.mailgun.org"
+  MAIL_PORT: "587"
+  MAILGUN_DOMAIN: "mailgun.edvardskrumins.com"
+  MAILGUN_ENDPOINT: "api.eu.mailgun.net"
+  MAIL_USERNAME: "null"
+  MAIL_FROM_ADDRESS: "no-reply@mailgun.edvardskrumins.com"
+  MAIL_FROM_NAME: "SS-Notifier"
+  
+  AWS_DEFAULT_REGION: "us-east-1"
+  AWS_BUCKET: ""
+  AWS_USE_PATH_STYLE_ENDPOINT: "false"
+  
+  VITE_APP_NAME: "SS-Notifier"
+  
+  ELASTICSEARCH_HOST: "elasticsearch"
+  ELASTICSEARCH_PORT: "9200"
+  ELASTICSEARCH_SCHEME: "http"
+  ELASTICSEARCH_INDEX_PREFIX: "ss_notifier"
+  
+  ENVIRONMENT: "production"
+  
+  FRONTEND_URL: "https://ss-notifier.edvardskrumins.com"
+

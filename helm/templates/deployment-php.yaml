@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ss-notifier-api.name" . }}-php
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "ss-notifier-api.labels" . | nindent 4 }}
+    component: php
+spec:
+  replicas: {{ .Values.php.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "ss-notifier-api.selectorLabels" . | nindent 6 }}
+      component: php
+  template:
+    metadata:
+      labels:
+        {{- include "ss-notifier-api.selectorLabels" . | nindent 8 }}
+        component: php
+    spec:
+      containers:
+      - name: php
+        image: {{ include "ss-notifier-api.phpImage" . }}
+        imagePullPolicy: {{ .Values.php.image.pullPolicy }}
+        envFrom:
+        - configMapRef:
+            name: {{ include "ss-notifier-api.name" . }}-config
+        - secretRef:
+            name: {{ include "ss-notifier-api.name" . }}-env
+        ports:
+        - name: php-fpm
+          containerPort: 9000
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+

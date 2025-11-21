@@ -1,0 +1,53 @@
+imageRegistry: ghcr.io
+imageRepository: edvardskrumins/ss-notifier-api
+
+php:
+  image:
+    repository: ss-notifier-php
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+
+nginx:
+  image:
+    repository: ss-notifier-api-nginx
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+
+worker:
+  enabled: true
+  image:
+    repository: ss-notifier-api-worker
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+
+namespace: ss-notifier
+
+postgresql:
+  imageTag: "18.0"
+  database: "ss_notifier"
+  username: "ss_notifier"
+  storageSize: "20Gi"
+
+redis:
+  imageTag: "8.2.1"
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  className: traefik-external
+  hosts:
+    - host: ss-notifier-api.edvardskrumins.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: edvardskrumins-com-tls
+      hosts:
+        - ss-notifier-api.edvardskrumins.com
+
