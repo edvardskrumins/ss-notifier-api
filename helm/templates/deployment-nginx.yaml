@@ -18,6 +18,12 @@ spec:
         {{- include "ss-notifier-api.selectorLabels" . | nindent 8 }}
         component: nginx
     spec:
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range .Values.imagePullSecrets }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
       containers:
       - name: nginx
         image: {{ include "ss-notifier-api.nginxImage" . }}

@@ -1,5 +1,6 @@
 imageRegistry: ghcr.io
 imageRepository: edvardskrumins/ss-notifier-api
+imagePullSecrets: ["ghcr-secret"]
 
 php:
   image:
