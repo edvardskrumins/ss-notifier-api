@@ -52,6 +52,8 @@ jobs:
           push: true
           tags: ${{ steps.meta-php.outputs.tags }}
           labels: ${{ steps.meta-php.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_PHP }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_PHP }}:buildcache,mode=max
 
       - name: Extract metadata for Nginx image
         id: meta-nginx
@@ -71,6 +73,8 @@ jobs:
           push: true
           tags: ${{ steps.meta-nginx.outputs.tags }}
           labels: ${{ steps.meta-nginx.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_NGINX }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_NGINX }}:buildcache,mode=max
 
       - name: Extract metadata for Worker image
         id: meta-worker
@@ -90,6 +94,8 @@ jobs:
           push: true
           tags: ${{ steps.meta-worker.outputs.tags }}
           labels: ${{ steps.meta-worker.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_WORKER }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_WORKER }}:buildcache,mode=max
 
       - name: Extract metadata for Filebeat image
         id: meta-filebeat
@@ -109,6 +115,8 @@ jobs:
           push: true
           tags: ${{ steps.meta-filebeat.outputs.tags }}
           labels: ${{ steps.meta-filebeat.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FILEBEAT }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FILEBEAT }}:buildcache,mode=max
 
       - name: Extract metadata for Kibana image
         id: meta-kibana
@@ -128,6 +136,8 @@ jobs:
           push: true
           tags: ${{ steps.meta-kibana.outputs.tags }}
           labels: ${{ steps.meta-kibana.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_KIBANA }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_KIBANA }}:buildcache,mode=max
 
   deploy:
     runs-on: self-hosted
@@ -143,6 +153,5 @@ jobs:
         run: |
           helm upgrade --install ss-notifier-api ./helm \
             --namespace ss-notifier \
-            --create-namespace \
             --wait \
             --timeout 10m

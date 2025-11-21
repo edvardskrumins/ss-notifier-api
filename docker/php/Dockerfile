@@ -35,14 +35,18 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy application files
-COPY . /var/www/html/
+# Copy composer files first (for better layer caching)
+COPY composer.json composer.lock ./
 
-# Install production dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts && \
+# Install production dependencies with cache mount
+RUN --mount=type=cache,target=/root/.composer/cache \
+    composer install --no-dev --optimize-autoloader --no-interaction --no-scripts && \
     composer dump-autoload --optimize --classmap-authoritative
 
-# Copy PHP configurations
+# Copy application files (after composer install for better caching)
+COPY . /var/www/html/
+
+# Copy PHP configurations (overwrite any defaults)
 COPY docker/php/php.ini /usr/local/etc/php/php.ini
 COPY docker/php/php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
 

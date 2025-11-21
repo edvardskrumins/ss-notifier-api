@@ -37,11 +37,15 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy application files
-COPY . /var/www/html/
+# Copy composer files first (for better layer caching)
+COPY composer.json composer.lock ./
 
-# Install production dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+# Install production dependencies with cache mount
+RUN --mount=type=cache,target=/root/.composer/cache \
+    composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+
+# Copy application files (after composer install for better caching)
+COPY . /var/www/html/
 
 # Copy configurations
 COPY docker/php-worker/php.ini /usr/local/etc/php/php.ini
