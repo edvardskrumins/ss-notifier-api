@@ -151,7 +151,13 @@ jobs:
 
       - name: Deploy Helm chart
         run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          IMAGE_TAG="${{ github.ref_name }}-${SHORT_SHA}"
+          
           helm upgrade --install ss-notifier-api ./helm \
             --namespace ss-notifier \
+            --set php.image.tag=${IMAGE_TAG} \
+            --set nginx.image.tag=${IMAGE_TAG} \
+            --set worker.image.tag=${IMAGE_TAG} \
             --wait \
             --timeout 10m
