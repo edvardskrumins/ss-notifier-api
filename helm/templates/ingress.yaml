@@ -10,6 +10,7 @@ metadata:
     kubernetes.io/ingress.class: {{ .Values.ingress.className }}
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
 spec:
+  ingressClassName: {{ .Values.ingress.className }}
   {{- if .Values.ingress.tls }}
   tls:
     {{- range .Values.ingress.tls }}
