@@ -31,7 +31,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:3001'],
+    'allowed_origins' => ['http://localhost:3001', 'https://ss-notifier.edvardskrumins.com'],
 
     'allowed_origins_patterns' => [],
 
