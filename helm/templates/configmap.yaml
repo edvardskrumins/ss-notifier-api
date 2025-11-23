@@ -33,8 +33,9 @@ data:
   SESSION_ENCRYPT: "false"
   SESSION_PATH: "/"
   SESSION_DOMAIN: ".edvardskrumins.com"
-  SANCTUM_STATEFUL_DOMAINS: "ss-notifier-api.edvardskrumins.com"
+  SANCTUM_STATEFUL_DOMAINS: "ss-notifier-api.edvardskrumins.com,ss-notifier.edvardskrumins.com"
   SESSION_SECURE_COOKIE: "true"
+  SESSION_SAME_SITE: "none"
   
   BROADCAST_CONNECTION: "log"
   FILESYSTEM_DISK: "local"
