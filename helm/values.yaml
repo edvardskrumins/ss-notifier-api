@@ -39,7 +39,8 @@ elasticsearch:
   enabled: true
   image: "docker.elastic.co/elasticsearch/elasticsearch"
   imageTag: "9.1.4"  
-  replicas: 1
+  replicas: 3  
+  minimumMasterNodes: 2  
   auth:
     enabled: true
   resources:
@@ -51,10 +52,7 @@ elasticsearch:
       memory: 1Gi  
   extraEnvs:
     - name: ES_JAVA_OPTS
-      value: "-Xms256m -Xmx256m"  
-  esConfig:
-    elasticsearch.yml: |
-      discovery.type: single-node
+      value: "-Xms256m -Xmx256m"
   volumeClaimTemplate:
     accessModes: ["ReadWriteOnce"]
     storageClassName: longhorn
