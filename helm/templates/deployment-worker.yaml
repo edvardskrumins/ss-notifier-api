@@ -39,11 +39,11 @@ spec:
           mountPath: /var/www/html/storage/logs
         resources:
           requests:
+            cpu: 250m  
+            memory: 256Mi
+          limits:
             cpu: 500m
             memory: 512Mi
-          limits:
-            cpu: 1000m
-            memory: 1Gi
       {{- if .Values.filebeat.enabled }}
       - name: filebeat
         image: docker.elastic.co/beats/filebeat:{{ .Values.filebeat.imageTag }}
