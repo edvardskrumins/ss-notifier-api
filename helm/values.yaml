@@ -35,6 +35,83 @@ postgresql:
 redis:
   imageTag: "8.2.1"
 
+elasticsearch:
+  enabled: true
+  # Elastic Helm chart configuration - using same image as local dev
+  image: "docker.elastic.co/elasticsearch/elasticsearch"
+  imageTag: "9.1.4"  # Same version as local: 9.1.4
+  replicas: 1
+  minimumMasterNodes: 1
+  auth:
+    enabled: true
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+  extraEnvs:
+    - name: ES_JAVA_OPTS
+      value: "-Xms512m -Xmx512m"
+    - name: discovery.type
+      value: "single-node"
+  volumeClaimTemplate:
+    accessModes: ["ReadWriteOnce"]
+    storageClassName: longhorn
+    resources:
+      requests:
+        storage: 50Gi
+  service:
+    type: ClusterIP
+    annotations: {}
+
+kibana:
+  enabled: true
+  image: "docker.elastic.co/kibana/kibana"
+  imageTag: "9.1.4"
+  replicas: 1
+  elasticsearchHosts: "https://ss-notifier-api-elasticsearch-master:9200"
+  elasticsearchUsername: "kibana_system"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  service:
+    type: ClusterIP
+    annotations: {}
+  ingress:
+    enabled: false
+    className: traefik-external
+    hosts:
+      - host: kibana.local.edvardskrumins.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: edvardskrumins-com-tls
+        hosts:
+          - kibana.local.edvardskrumins.com
+
+filebeat:
+  enabled: true
+  imageTag: "9.1.4"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+phpLogs:
+  storageSize: "10Gi"
+
+environment: "production"
+
 service:
   type: ClusterIP
   port: 80

@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Development files
+.git/
+.gitignore
+.env
+.env.*
+*.log
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build artifacts
+dist/
+build/
+public/build/
+
+# Documentation
+README.md
+*.md
+
+# Test files
+tests/
+phpunit.xml
+.phpunit.result.cache
+
+# Laravel specific
+storage/
+bootstrap/cache/
+*.cache
+
+# Other
+.DS_Store
+Thumbs.db
+

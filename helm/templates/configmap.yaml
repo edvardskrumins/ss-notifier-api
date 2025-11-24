@@ -64,7 +64,7 @@ data:
   
   VITE_APP_NAME: "SS-Notifier"
   
-  ELASTICSEARCH_HOST: "elasticsearch"
+  ELASTICSEARCH_HOST: "{{ include "ss-notifier-api.name" . }}-elasticsearch-master"
   ELASTICSEARCH_PORT: "9200"
   ELASTICSEARCH_SCHEME: "http"
   ELASTICSEARCH_INDEX_PREFIX: "ss_notifier"

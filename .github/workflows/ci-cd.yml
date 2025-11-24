@@ -10,8 +10,6 @@ env:
   IMAGE_NAME_PHP: ${{ github.repository }}/ss-notifier-php
   IMAGE_NAME_NGINX: ${{ github.repository }}/ss-notifier-api-nginx
   IMAGE_NAME_WORKER: ${{ github.repository }}/ss-notifier-api-worker
-  IMAGE_NAME_FILEBEAT: ${{ github.repository }}/ss-notifier-api-filebeat
-  IMAGE_NAME_KIBANA: ${{ github.repository }}/ss-notifier-api-kibana
 
 jobs:
   build:
@@ -97,48 +95,6 @@ jobs:
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_WORKER }}:buildcache
           cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_WORKER }}:buildcache,mode=max
 
-      - name: Extract metadata for Filebeat image
-        id: meta-filebeat
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FILEBEAT }}
-          tags: |
-            type=ref,event=branch
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Build and push Filebeat image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./docker/filebeat/Dockerfile
-          push: true
-          tags: ${{ steps.meta-filebeat.outputs.tags }}
-          labels: ${{ steps.meta-filebeat.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FILEBEAT }}:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FILEBEAT }}:buildcache,mode=max
-
-      - name: Extract metadata for Kibana image
-        id: meta-kibana
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_KIBANA }}
-          tags: |
-            type=ref,event=branch
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Build and push Kibana image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./docker/kibana/Dockerfile
-          push: true
-          tags: ${{ steps.meta-kibana.outputs.tags }}
-          labels: ${{ steps.meta-kibana.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_KIBANA }}:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_KIBANA }}:buildcache,mode=max
-
   deploy:
     runs-on: self-hosted
     needs: build
@@ -148,6 +104,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Add Elastic Helm repository
+        run: |
+          helm repo add elastic https://helm.elastic.co
+          helm repo update
+
+      - name: Build Helm dependencies
+        run: |
+          (cd helm && helm dependency build)
 
       - name: Deploy Helm chart
         run: |
