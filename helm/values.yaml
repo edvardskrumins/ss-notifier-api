@@ -67,7 +67,7 @@ elasticsearch:
     annotations: {}
 
 kibana:
-  enabled: true
+  enabled: false 
   image: "docker.elastic.co/kibana/kibana"
   imageTag: "9.1.4"
   replicas: 1
