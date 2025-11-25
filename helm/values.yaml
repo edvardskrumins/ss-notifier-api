@@ -58,7 +58,7 @@ elasticsearch:
     storageClassName: longhorn
     resources:
       requests:
-        storage: 50Gi
+        storage: 10Gi  
   service:
     type: ClusterIP
     annotations: {}
