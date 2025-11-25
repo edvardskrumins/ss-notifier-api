@@ -39,7 +39,8 @@ elasticsearch:
   enabled: true
   image: "docker.elastic.co/elasticsearch/elasticsearch"
   imageTag: "9.1.4"  
-  replicas: 1  
+  replicas: 2  
+  minimumMasterNodes: 2  
   auth:
     enabled: true
   resources:
