@@ -81,7 +81,7 @@ spec:
           mountPath: /usr/share/filebeat/data
         resources:
           requests:
-            cpu: 25m  # Reduced to stay under 70% cluster capacity
+            cpu: 25m  
             memory: 64Mi
           limits:
             cpu: 100m
