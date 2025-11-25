@@ -42,11 +42,11 @@ spec:
           mountPath: /var/www/html/storage/logs
         resources:
           requests:
-            cpu: 200m  
-            memory: 256Mi
+            cpu: 150m  
+            memory: 192Mi
           limits:
-            cpu: 500m
-            memory: 512Mi
+            cpu: 400m
+            memory: 384Mi
       {{- if .Values.filebeat.enabled }}
       - name: filebeat
         image: docker.elastic.co/beats/filebeat:{{ .Values.filebeat.imageTag }}
@@ -81,11 +81,11 @@ spec:
           mountPath: /usr/share/filebeat/data
         resources:
           requests:
-            cpu: 50m  # Reduced for cluster with limited CPU
-            memory: 128Mi
+            cpu: 25m  # Reduced to stay under 70% cluster capacity
+            memory: 64Mi
           limits:
-            cpu: 200m
-            memory: 256Mi
+            cpu: 100m
+            memory: 128Mi
       {{- end }}
       volumes:
       - name: php-logs
