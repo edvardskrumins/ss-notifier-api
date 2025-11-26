@@ -64,7 +64,7 @@ elasticsearch:
     annotations: {}
 
 kibana:
-  enabled: false 
+  enabled: true
   image: "docker.elastic.co/kibana/kibana"
   imageTag: "9.1.4"
   replicas: 1
@@ -81,7 +81,7 @@ kibana:
     type: ClusterIP
     annotations: {}
   ingress:
-    enabled: false
+    enabled: true
     className: traefik-external
     hosts:
       - host: kibana.local.edvardskrumins.com
