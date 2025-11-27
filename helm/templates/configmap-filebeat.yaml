@@ -64,12 +64,14 @@ data:
         scan_frequency: 10s
 
     output.elasticsearch:
-      hosts: ["https://{{ printf "%s-elasticsearch-master:9200" (include "ss-notifier-api.name" .) }}"]
+      hosts: ["https://{{ include "ss-notifier-api.name" . }}-elasticsearch-es-http:9200"]
       username: ${ELASTICSEARCH_USERNAME}
       password: ${ELASTICSEARCH_PASSWORD}
       ssl:
         enabled: true
-        verification_mode: none  # Using self-signed certs from Elastic Helm chart
+        verification_mode: certificate
+        certificate_authorities:
+          - /usr/share/filebeat/certs/ca.crt
       indices:
         - index: "app-logs-%{+yyyy.MM.dd}"
           when.equals:

@@ -1,0 +1,45 @@
+{{- if .Values.elasticsearch.enabled }}
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: {{ include "ss-notifier-api.name" . }}-elasticsearch
+  namespace: {{ .Values.namespace | default "default" }}
+  labels:
+    {{- include "ss-notifier-api.labels" . | nindent 4 }}
+spec:
+  version: {{ .Values.elasticsearch.imageTag }}
+  http:
+    tls:
+      selfSignedCertificate:
+        disabled: false
+  nodeSets:
+    - name: default
+      count: {{ .Values.elasticsearch.replicas }}
+      config:
+        node.roles: ["master", "data", "ingest"]
+        xpack.security.enabled: {{ .Values.elasticsearch.auth.enabled }}
+      podTemplate:
+        spec:
+          containers:
+            - name: elasticsearch
+              resources:
+                {{- toYaml .Values.elasticsearch.resources | nindent 16 }}
+              {{- if .Values.elasticsearch.extraEnvs }}
+              env:
+                {{- range .Values.elasticsearch.extraEnvs }}
+                - name: {{ .name }}
+                  value: {{ .value | quote }}
+                {{- end }}
+              {{- end }}
+      volumeClaimTemplates:
+        - metadata:
+            name: elasticsearch-data
+          spec:
+            accessModes:
+              {{- toYaml .Values.elasticsearch.volumeClaimTemplate.accessModes | nindent 14 }}
+            storageClassName: {{ .Values.elasticsearch.volumeClaimTemplate.storageClassName }}
+            resources:
+              requests:
+                storage: {{ .Values.elasticsearch.volumeClaimTemplate.resources.requests.storage }}
+{{- end }}
+

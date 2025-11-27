@@ -55,17 +55,13 @@ spec:
         - name: ENVIRONMENT
           value: {{ .Values.environment | default "production" | quote }}
         - name: ELASTICSEARCH_USERNAME
-          valueFrom:
-            secretKeyRef:
-              name: elasticsearch-master-credentials
-              key: username
-              optional: true
+          value: "elastic"
         - name: ELASTICSEARCH_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: elasticsearch-master-credentials
-              key: password
-              optional: true
+              name: {{ include "ss-notifier-api.name" . }}-elasticsearch-es-elastic-user
+              key: elastic
+              optional: false
         volumeMounts:
         - name: filebeat-config
           mountPath: /etc/filebeat.yml
@@ -76,6 +72,10 @@ spec:
           readOnly: true
         - name: filebeat-data
           mountPath: /usr/share/filebeat/data
+        - name: elasticsearch-certs
+          mountPath: /usr/share/filebeat/certs/ca.crt
+          readOnly: true
+          subPath: ca.crt
         resources:
           requests:
             cpu: 25m  
@@ -94,6 +94,9 @@ spec:
           name: {{ include "ss-notifier-api.name" . }}-filebeat-config
       - name: filebeat-data
         emptyDir: {}
+      - name: elasticsearch-certs
+        secret:
+          secretName: {{ include "ss-notifier-api.name" . }}-elasticsearch-es-http-certs-public
       {{- end }}
 {{- end }}
 

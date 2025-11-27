@@ -1,0 +1,67 @@
+{{- if .Values.kibana.enabled }}
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: {{ include "ss-notifier-api.name" . }}-kibana
+  namespace: {{ .Values.namespace | default "default" }}
+  labels:
+    {{- include "ss-notifier-api.labels" . | nindent 4 }}
+spec:
+  version: {{ .Values.kibana.imageTag }}
+  count: {{ .Values.kibana.replicas }}
+  elasticsearchRef:
+    name: {{ include "ss-notifier-api.name" . }}-elasticsearch
+  http:
+    tls:
+      selfSignedCertificate:
+        disabled: false
+    service:
+      spec:
+        type: {{ .Values.kibana.service.type | default "ClusterIP" }}
+      {{- if .Values.kibana.service.annotations }}
+      metadata:
+        annotations:
+          {{- toYaml .Values.kibana.service.annotations | nindent 10 }}
+      {{- end }}
+  podTemplate:
+    spec:
+      containers:
+        - name: kibana
+          resources:
+            {{- toYaml .Values.kibana.resources | nindent 12 }}
+{{- end }}
+
+---
+{{- if and .Values.kibana.enabled .Values.kibana.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "ss-notifier-api.name" . }}-kibana
+  namespace: {{ .Values.namespace | default "default" }}
+  labels:
+    {{- include "ss-notifier-api.labels" . | nindent 4 }}
+  annotations:
+    {{- toYaml .Values.kibana.ingress.annotations | nindent 4 }}
+spec:
+  ingressClassName: {{ .Values.kibana.ingress.className }}
+  {{- if .Values.kibana.ingress.tls }}
+  tls:
+    {{- toYaml .Values.kibana.ingress.tls | nindent 4 }}
+  {{- end }}
+  rules:
+    {{- range .Values.kibana.ingress.hosts }}
+    - host: {{ .host }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ include "ss-notifier-api.name" $ }}-kibana-kb-http
+                port:
+                  number: 5601
+          {{- end }}
+    {{- end }}
+{{- end }}
+
