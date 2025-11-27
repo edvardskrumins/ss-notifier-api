@@ -8,6 +8,11 @@ metadata:
     component: php
 spec:
   replicas: {{ .Values.php.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: {{ .Values.php.strategy.maxSurge | default 1 }}
+      maxUnavailable: {{ .Values.php.strategy.maxUnavailable | default 0 }}
   selector:
     matchLabels:
       {{- include "ss-notifier-api.selectorLabels" . | nindent 6 }}

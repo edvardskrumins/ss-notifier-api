@@ -8,6 +8,9 @@ php:
     tag: latest
     pullPolicy: IfNotPresent
   replicaCount: 2
+  strategy:
+    maxSurge: 1        
+    maxUnavailable: 0  
 
 nginx:
   image:
@@ -15,6 +18,9 @@ nginx:
     tag: latest
     pullPolicy: IfNotPresent
   replicaCount: 2
+  strategy:
+    maxSurge: 1        
+    maxUnavailable: 0  
 
 worker:
   enabled: true
