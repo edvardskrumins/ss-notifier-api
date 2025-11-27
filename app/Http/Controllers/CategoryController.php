@@ -21,9 +21,7 @@ class CategoryController extends Controller
 
     public function subcategories(Category $category)
     {
-        $subcategories = $category
-            ->relatedChildren()
-            ->get();
+        $subcategories = $category->relatedChildren()->get();
 
         return CategoryResource::collection($subcategories)->additional([
             'meta' => [

@@ -18,6 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         ]);
 
+        $middleware->api(prepend: [
+            \App\Http\Middleware\SetLocale::class,
+        ]);
+
         // Log API requests
         $middleware->api(prepend: [
             \App\Http\Middleware\LogApiRequests::class,

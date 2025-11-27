@@ -7,10 +7,19 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Models\Scopes\LocaleScope;
 
 class Category extends Model
 {
     use HasFactory;
+
+    /**
+     * The "booted" method of the model.
+     */
+    protected static function booted(): void
+    {
+        static::addGlobalScope(new LocaleScope);
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -21,11 +30,15 @@ class Category extends Model
         'title',
         'url',
         'type',
+        'locale',
     ];
 
     public const TYPE_CATEGORY = 'category';
     public const TYPE_SUBCATEGORY = 'subcategory';
     public const TYPE_ADS = 'ads';
+
+    public const LOCALE_LV = 'lv';
+    public const LOCALE_EN = 'en';
 
     /**
      * Get the filters for this category.
@@ -45,6 +58,7 @@ class Category extends Model
 
     /**
      * Get all categories that are related to this one as children (via relationships table).
+     * The global scope automatically filters by locale.
      */
     public function relatedChildren(): BelongsToMany
     {
@@ -58,6 +72,7 @@ class Category extends Model
 
     /**
      * Get all categories that are related to this one as parents (via relationships table).
+     * The global scope automatically filters by locale.
      */
     public function relatedParents(): BelongsToMany
     {
@@ -108,6 +123,14 @@ class Category extends Model
     public function scopeLeaf($query)
     {
         return $query->whereDoesntHave('children');
+    }
+
+    /**
+     * Get a query builder without the global scope.
+     */
+    public static function withoutLocaleScope()
+    {
+        return static::withoutGlobalScope(LocaleScope::class);
     }
 
 

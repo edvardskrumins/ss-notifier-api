@@ -248,7 +248,7 @@ class SparePartsCategoryService
     /**
      * Generate spare parts categories for a given base URL
      */
-    public function generateSparePartsCategories(string $baseUrl, ?int $parentId = null): array
+    public function generateSparePartsCategories(string $baseUrl, ?int $parentId = null, string $locale = Category::LOCALE_LV): array
     {
         $createdCategories = [];
 
@@ -257,11 +257,15 @@ class SparePartsCategoryService
         foreach (self::SPARE_PARTS_CATEGORIES as $categoryName => $title) {
             $fullUrl = $baseUrl . $categoryName . '/';
             
-            $category = Category::updateOrCreate(
-                ['url' => $fullUrl],
+            $category = Category::withoutLocaleScope()->updateOrCreate(
+                [
+                    'locale' => $locale,
+                    'url' => $fullUrl
+                ],
                 [
                     'title' => $title,
                     'type' => Category::TYPE_ADS,
+                    'locale' => $locale,
                 ]
             );
             

@@ -21,7 +21,7 @@ class CrawlPages extends Command
      *
      * @var string
      */
-    protected $signature = 'ss:crawl-pages';
+    protected $signature = 'ss:crawl-pages {--locale=lv}';
 
     /**
      * The console command description.
@@ -75,7 +75,7 @@ class CrawlPages extends Command
     ];
 
     private $baseUrl = 'https://www.ss.com';
-    private $locale = 'lv';
+    private $locale = Category::LOCALE_LV;
     private $maxDepth = 20;
     private $client;
     private $categoryStructure = [];
@@ -106,8 +106,11 @@ class CrawlPages extends Command
      */
     public function handle()
     {
+        $this->locale = $this->option('locale') ?? Category::LOCALE_LV;
+        
         $startTime = microtime(true);
         $this->info("Starting to crawl ss.com from: {$this->baseUrl}");
+        $this->info("Locale: {$this->locale}");
         $this->info("Maximum depth: {$this->maxDepth}");
         
         $this->scrapeHomePage();
@@ -177,11 +180,15 @@ class CrawlPages extends Command
         foreach ($categories as $category) {
             $this->info("Scraping category: " . $category['text']);
             
-            $categoryModel = Category::updateOrCreate(
-                ['url' => $this->baseUrl . $category['href']], 
+            $categoryModel = Category::withoutLocaleScope()->updateOrCreate(
+                [
+                    'locale' => $this->locale,
+                    'url' => $this->baseUrl . $category['href']
+                ], 
                 [
                     'title' => $category['title'],
                     'type' => Category::TYPE_CATEGORY,
+                    'locale' => $this->locale,
                 ]
             );
             
@@ -297,7 +304,10 @@ class CrawlPages extends Command
                 
                 $fullUrl = $this->baseUrl . $subcategory['href'];
                 
-                $existingCategory = Category::where('url', $fullUrl)->first();
+                $existingCategory = Category::withoutLocaleScope()
+                    ->where('locale', $this->locale)
+                    ->where('url', $fullUrl)
+                    ->first();
                 
                 if ($existingCategory) {
                     $this->info("      -> Category already exists (ID: {$existingCategory->id})");
@@ -325,11 +335,15 @@ class CrawlPages extends Command
                         continue;
                     }
                 } else {
-                    $subcategoryModel = Category::updateOrCreate(
-                        ['url' => $fullUrl],
+                    $subcategoryModel = Category::withoutLocaleScope()->updateOrCreate(
+                        [
+                            'locale' => $this->locale,
+                            'url' => $fullUrl
+                        ],
                         [
                             'title' => $subcategory['text'],
                             'type' => Category::TYPE_SUBCATEGORY,
+                            'locale' => $this->locale,
                         ]
                     );
                     
@@ -875,7 +889,7 @@ class CrawlPages extends Command
         $this->info("=== Generating spare parts categories for: {$url} ===");
         
         try {
-            $createdCategories = $this->sparePartsService->generateSparePartsCategories($url, $parentId);
+            $createdCategories = $this->sparePartsService->generateSparePartsCategories($url, $parentId, $this->locale);
             $this->info("=== Spare parts categories generation completed ===");
             $this->info("Created " . count($createdCategories) . " categories with parent relationship to ID: {$parentId}");
         } catch (\Exception $e) {
