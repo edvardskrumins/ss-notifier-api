@@ -18,10 +18,13 @@ Route::middleware('auth:sanctum')->group(function () {
         ->middleware('throttle:' . config('fortify.limiters.verification', '6,1'));
 });
 
+Route::prefix('categories')->group(function () {
+    Route::get('{category}/subcategories', [CategoryController::class, 'subcategories']);
+    Route::get('{category}/ads', [CategoryController::class, 'ads']);
+});
+
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::prefix('categories')->group(function () {
-        Route::get('{category}/subcategories', [CategoryController::class, 'subcategories']);
-        Route::get('{category}/ads', [CategoryController::class, 'ads']);
         Route::post('{category}/start-notifications', [CategoryController::class, 'startNotifications']);
     });
 
