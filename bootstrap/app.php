@@ -30,5 +30,8 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withSchedule(function ($schedule): void {
-        $schedule->command('ss:sync-ads')->everyMinute();
+        $schedule->command('ss:sync-ads')
+            ->everyMinute()
+            ->withoutOverlapping()
+            ->onOneServer();
     })->create();
