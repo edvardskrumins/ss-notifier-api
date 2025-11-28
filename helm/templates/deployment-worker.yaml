@@ -25,6 +25,37 @@ spec:
         - name: {{ . }}
         {{- end }}
       {{- end }}
+      {{- if .Values.nodeAffinity.enabled }}
+      affinity:
+        nodeAffinity:
+          {{- if .Values.nodeAffinity.preferredNodes }}
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: {{ .Values.nodeAffinity.weight | default 30 }}
+              preference:
+                matchExpressions:
+                  {{- range .Values.nodeAffinity.preferredNodes }}
+                  - key: {{ .key }}
+                    operator: {{ .operator }}
+                    values:
+                      {{- range .values }}
+                      - {{ . | quote }}
+                      {{- end }}
+                  {{- end }}
+          {{- end }}
+          {{- if .Values.nodeAffinity.requiredNodes }}
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  {{- range .Values.nodeAffinity.requiredNodes }}
+                  - key: {{ .key }}
+                    operator: {{ .operator }}
+                    values:
+                      {{- range .values }}
+                      - {{ . | quote }}
+                      {{- end }}
+                  {{- end }}
+          {{- end }}
+      {{- end }}
       containers:
       - name: worker
         image: {{ include "ss-notifier-api.workerImage" . }}

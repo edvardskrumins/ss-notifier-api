@@ -114,6 +114,15 @@ phpLogs:
 
 environment: "production"
 
+nodeAffinity:
+  enabled: true
+  weight: 30
+  preferredNodes:
+    - key: node-type
+      operator: In
+      values:
+        - agent
+
 service:
   type: ClusterIP
   port: 80
