@@ -26,8 +26,9 @@ class UpdateAdNotificationRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'filters' => ['sometimes', 'array'],
-            'filters.*.filter_id' => ['required', 'integer'],
+            'filters.*.filter_id' => ['nullable', 'integer'],
             'filters.*.label' => ['required', 'string'],
+            'filters.*.form_param' => ['nullable', 'string'],
             'filters.*.filter_value_id' => ['nullable', 'integer'],
             'filters.*.value' => ['required'],
             'filters.*.value.from.value' => ['nullable', 'string'],

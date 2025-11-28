@@ -16,9 +16,9 @@ return new class extends Migration
             $table->foreignId('ad_notification_id')->constrained('ad_notifications')->onDelete('cascade');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('filter_id')->constrained('filters')->onDelete('cascade');
-            $table->string('value'); // Hardcoded string value
+            $table->string('value'); 
             $table->foreignId('filter_value_id')->nullable()->constrained('filter_values')->onDelete('set null');
-            $table->boolean('is_min')->nullable(); // true = min/from, false = max/to, null = single value
+            $table->boolean('is_min')->nullable();
             $table->timestamps();
 
             $table->index('ad_notification_id');

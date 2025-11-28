@@ -202,8 +202,9 @@ class Category extends Model
 
         // Process and create filter records - simple: just store all values
         foreach ($filters as $filterData) {
-            $filterId = $filterData['filter_id'];
+            $filterId = $filterData['filter_id'] ?? null;
             $value = $filterData['value'] ?? null;
+            $formParam = $filterData['form_param'] ?? null;
 
             // Check if this is a range filter (has 'from' and/or 'to' keys)
             if (is_array($value) && (isset($value['from']) || isset($value['to']))) {
@@ -237,7 +238,7 @@ class Category extends Model
                     AdNotificationFilter::create([
                         'ad_notification_id' => $adNotification->id,
                         'user_id' => $userId,
-                        'filter_id' => $filterId,
+                        'filter_id' => $filterId, 
                         'value' => $stringValue,
                         'filter_value_id' => $filterData['filter_value_id'] ?? null,
                         'is_min' => null, // Single value, not a range

@@ -82,7 +82,13 @@ class SyncAds extends Command
 
         foreach ($notification->filters as $notificationFilter) {
             $filter = $notificationFilter->filter;
+            
+            // Handle hardcoded filters 
             if (!$filter) {
+                $pathPart = $this->extractUrlPathPart($notificationFilter);
+                if ($pathPart) {
+                    $urlPathParts[] = $pathPart;
+                }
                 continue;
             }
 
