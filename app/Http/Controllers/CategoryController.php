@@ -31,8 +31,9 @@ class CategoryController extends Controller
         ]);
     }
 
-    public function ads(Category $category)
+    public function ads($categoryId)
     {
+        $category = Category::withoutLocaleScope()->findOrFail($categoryId);
         $category->load(['filters.values']);
 
         return FilterResource::collection($category->filters)->additional([
@@ -43,8 +44,10 @@ class CategoryController extends Controller
         ]);
     }
 
-    public function startNotifications(StartNotificationRequest $request, Category $category)
+    public function startNotifications(StartNotificationRequest $request, $categoryId)
     {
+        $category = Category::withoutLocaleScope()->findOrFail($categoryId);
+        
         $validated = $request->validated();
         $user = $request->user();
 

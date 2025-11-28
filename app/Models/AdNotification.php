@@ -37,7 +37,7 @@ class AdNotification extends Model
      */
     public function category(): BelongsTo
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(Category::class)->withoutGlobalScope(\App\Models\Scopes\LocaleScope::class);
     }
 
     /**

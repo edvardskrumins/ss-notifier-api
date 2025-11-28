@@ -17,6 +17,7 @@ class CategoryResource extends JsonResource
             'title' => $this->title,
             'url' => $this->url,
             'type' => $this->type,
+            'locale' => $this->locale ?? null,
         ];
     }
 }
