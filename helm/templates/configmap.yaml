@@ -48,14 +48,8 @@ data:
   REDIS_HOST: "{{ include "ss-notifier-api.name" . }}-redis"
   REDIS_PORT: "6379"
   
-  MAIL_MAILER: "mailgun"
-  MAIL_SCHEME: "null"
-  MAIL_HOST: "smtp.eu.mailgun.org"
-  MAIL_PORT: "587"
-  MAILGUN_DOMAIN: "mailgun.edvardskrumins.com"
-  MAILGUN_ENDPOINT: "api.eu.mailgun.net"
-  MAIL_USERNAME: "null"
-  MAIL_FROM_ADDRESS: "no-reply@mailgun.edvardskrumins.com"
+  MAIL_MAILER: "ses"
+  MAIL_FROM_ADDRESS: "no-reply@edvardskrumins.com"
   MAIL_FROM_NAME: "SS-Notifier"
   
   AWS_DEFAULT_REGION: "us-east-1"

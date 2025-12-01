@@ -60,6 +60,9 @@ spec:
       - name: worker
         image: {{ include "ss-notifier-api.workerImage" . }}
         imagePullPolicy: {{ .Values.worker.image.pullPolicy }}
+        env:
+        - name: RUN_SCHEDULE
+          value: "true"
         envFrom:
         - configMapRef:
             name: {{ include "ss-notifier-api.name" . }}-config
