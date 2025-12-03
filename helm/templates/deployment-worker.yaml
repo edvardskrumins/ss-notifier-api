@@ -97,7 +97,7 @@ spec:
               key: elastic
               optional: false
         volumeMounts:
-        - name: filebeat-config
+        - name: filebeat-config-worker
           mountPath: /etc/filebeat.yml
           subPath: filebeat.yml
           readOnly: true
@@ -123,9 +123,9 @@ spec:
         persistentVolumeClaim:
           claimName: {{ include "ss-notifier-api.name" . }}-php-logs
       {{- if .Values.filebeat.enabled }}
-      - name: filebeat-config
+      - name: filebeat-config-worker
         configMap:
-          name: {{ include "ss-notifier-api.name" . }}-filebeat-config
+          name: {{ include "ss-notifier-api.name" . }}-filebeat-config-worker
       - name: filebeat-data
         emptyDir: {}
       - name: elasticsearch-certs
