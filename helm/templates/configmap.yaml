@@ -51,6 +51,7 @@ data:
   MAIL_MAILER: "ses"
   MAIL_FROM_ADDRESS: "no-reply@edvardskrumins.com"
   MAIL_FROM_NAME: "SS-Notifier"
+  AWS_DEFAULT_REGION: "us-east-1"
   
   VITE_APP_NAME: "SS-Notifier"
   
