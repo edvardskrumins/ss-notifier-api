@@ -41,10 +41,8 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --no-script
 COPY docker/php-worker/php.ini /usr/local/etc/php/php.ini
 COPY docker/php-worker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/php-worker/cron /etc/cron.d/cron
-COPY docker/php-worker/entrypoint.sh /entrypoint.sh
 
 RUN chmod 0644 /etc/cron.d/cron && \
-    chmod +x /entrypoint.sh && \
     crontab /etc/cron.d/cron && \
     touch /var/log/cron.log && \
     mkdir -p /var/log/supervisor && \
@@ -52,5 +50,5 @@ RUN chmod 0644 /etc/cron.d/cron && \
 
 USER root
 
-ENTRYPOINT ["/entrypoint.sh"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
 
