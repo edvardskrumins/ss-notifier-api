@@ -425,6 +425,7 @@ class SyncAds extends Command
             $adImage = null;
             $adDescription = null;
             $adOptionsList = null;
+            $adPrice = null;
 
             try {
                 $cookieJar = new CookieJar();
@@ -468,6 +469,18 @@ class SyncAds extends Command
                 if ($optionsListElement->count() > 0) {
                     $adOptionsList = $optionsListElement->outerHtml();
                 }
+
+                // Extract price
+                $priceElement = $adCrawler->filter('span.ads_price#tdo_8');
+                if ($priceElement->count() > 0) {
+                    $adPrice = trim($priceElement->text());
+                } else {
+                    // Fallback: try any element with class ads_price
+                    $priceElement = $adCrawler->filter('.ads_price')->first();
+                    if ($priceElement->count() > 0) {
+                        $adPrice = trim($priceElement->text());
+                    }
+                }
             } catch (\Exception $e) {
                 $this->warn("Failed to fetch ad details: " . $e->getMessage());
                 // Continue with email even if we can't fetch details
@@ -478,6 +491,11 @@ class SyncAds extends Command
             // Build HTML email
             $htmlMessage = "<h2>Jauns sludinājums atbilst jūsu meklēšanas kritērijiem!</h2>";
             $htmlMessage .= "<p><strong>Meklēšanas nosaukums:</strong> {$notification->name}</p>";
+            
+            if ($adPrice) {
+                $htmlMessage .= "<p><strong>Cena:</strong> <strong style=\"font-size: 1.2em; color: #3fbc58;\">{$adPrice}</strong></p>";
+            }
+            
             $htmlMessage .= "<p><a href=\"{$fullAdUrl}\">Skatīt sludinājumu</a></p>";
 
             if ($adImage) {
