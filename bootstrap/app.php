@@ -36,7 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withSchedule(function ($schedule): void {
         if (filter_var(env('RUN_SCHEDULE', false), FILTER_VALIDATE_BOOLEAN)) {
             $schedule->command('ss:sync-ads')
-                ->hourly()
+                ->everyThirtyMinutes()
                 ->withoutOverlapping()
                 ->onOneServer();
         }
