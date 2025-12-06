@@ -1,6 +1,25 @@
+#
+# PHP Dependencies Stage
+#
+FROM composer:2.7 AS vendor
+
+WORKDIR /app
+
+COPY composer.json composer.lock ./
+
+RUN composer install \
+    --ignore-platform-reqs \
+    --no-interaction \
+    --no-plugins \
+    --no-scripts \
+    --prefer-dist \
+    --no-dev
+
+#
+# Application Stage
+#
 FROM php:8.4-cli-alpine
 
-# Install system dependencies
 RUN apk add --no-cache \
     postgresql-dev \
     libpng-dev \
@@ -29,14 +48,10 @@ RUN apk add --no-cache pcre-dev $PHPIZE_DEPS && \
     docker-php-ext-enable redis && \
     apk del pcre-dev $PHPIZE_DEPS
 
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-COPY composer.json composer.lock ./
-
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts && \
-    composer dump-autoload --optimize --classmap-authoritative
+COPY --from=vendor /app/vendor/ /var/www/html/vendor/
 
 COPY . /var/www/html/
 
@@ -53,4 +68,3 @@ RUN chmod 0644 /etc/cron.d/cron && \
 USER root
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
-
