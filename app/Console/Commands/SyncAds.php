@@ -48,6 +48,7 @@ class SyncAds extends Command
         }
 
         Log::channel('worker')->info("Found {$notifications->count()} active notification(s).");
+        $this->info("Found {$notifications->count()} active notification(s).");
 
         foreach ($notifications as $notification) {
             try {
@@ -69,6 +70,7 @@ class SyncAds extends Command
     private function processNotification(AdNotification $notification)
     {
         Log::channel('worker')->info("Processing notification: {$notification->name} (ID: {$notification->id})");
+        $this->info("Processing notification: {$notification->name} (ID: {$notification->id})");
 
         $category = $notification->category;
         if (!$category) {
@@ -86,7 +88,7 @@ class SyncAds extends Command
             // Handle hardcoded filters 
             if (!$filter) {
                 $pathPart = $this->extractUrlPathPart($notificationFilter);
-                if ($pathPart) {
+                if ($pathPart && !in_array($pathPart, $urlPathParts, true)) {
                     $urlPathParts[] = $pathPart;
                 }
                 continue;
@@ -97,7 +99,7 @@ class SyncAds extends Command
             // If form_param is 'sid' or null, add to URL path
             if ($formParam === 'sid' || $formParam === null) {
                 $pathPart = $this->extractUrlPathPart($notificationFilter);
-                if ($pathPart) {
+                if ($pathPart && !in_array($pathPart, $urlPathParts, true)) {
                     $urlPathParts[] = $pathPart;
                 }
             } else {
@@ -135,6 +137,8 @@ class SyncAds extends Command
         }
         
         Log::channel('worker')->info("Built URL (for initial GET): {$urlPath}");
+        $this->info("Built URL (for initial GET): {$urlPath}");
+        $this->info("Form params: " . json_encode($formParams));
         Log::channel('worker')->info("Form params: " . json_encode($formParams));
 
         $pageResponse = $this->executeQuery($urlPath, $formParams, $notification, $urlPathParts);
