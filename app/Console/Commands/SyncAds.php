@@ -130,11 +130,7 @@ class SyncAds extends Command
             }
         }
 
-        $urlPath = rtrim($category->url, '/');
-
-        if (!empty($urlPathParts)) {
-            $urlPath .= '/' . implode('/', $urlPathParts);
-        }
+        $urlPath = $this->buildUrlPathWithoutDuplicates($category->url, $urlPathParts);
         
         Log::channel('worker')->info("Built URL (for initial GET): {$urlPath}");
         $this->info("Built URL (for initial GET): {$urlPath}");
@@ -164,6 +160,50 @@ class SyncAds extends Command
         $parts = explode('/', $value);
         $lastPart = end($parts);
         return !empty($lastPart) ? $lastPart : null;
+    }
+
+    /**
+     * Build URL path by combining base URL with path parts, removing duplicates
+     * 
+     * @param string $baseUrl The base URL path (category URL)
+     * @param array $urlPathParts Array of path parts to append
+     * @return string The final URL path without duplicate segments
+     */
+    private function buildUrlPathWithoutDuplicates(string $baseUrl, array $urlPathParts): string
+    {
+        $urlPath = rtrim($baseUrl, '/');
+
+        if (empty($urlPathParts)) {
+            return $urlPath;
+        }
+
+        $pathOnly = $urlPath;
+        if (strpos($pathOnly, '://') !== false) {
+            $parsedUrl = parse_url($pathOnly);
+            $pathOnly = $parsedUrl['path'] ?? '';
+        }
+        $pathOnly = trim($pathOnly, '/');
+        
+        // Get the last segment of the current URL path to check for duplicates
+        $urlPathSegments = !empty($pathOnly) ? explode('/', $pathOnly) : [];
+        $lastUrlSegment = !empty($urlPathSegments) ? end($urlPathSegments) : null;
+        
+        // Filter out path parts that duplicate the last segment of the URL
+        // Also prevent consecutive duplicates within the path parts
+        $filteredPathParts = [];
+        foreach ($urlPathParts as $pathPart) {
+            if ($pathPart !== $lastUrlSegment && !empty($pathPart)) {
+                $filteredPathParts[] = $pathPart;
+                // Update lastUrlSegment for next iteration to prevent consecutive duplicates
+                $lastUrlSegment = $pathPart;
+            }
+        }
+        
+        if (!empty($filteredPathParts)) {
+            $urlPath .= '/' . implode('/', $filteredPathParts);
+        }
+
+        return $urlPath;
     }
 
     /**
