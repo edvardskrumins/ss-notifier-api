@@ -30,10 +30,12 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-COPY . /var/www/html/
+COPY composer.json composer.lock ./
 
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts && \
     composer dump-autoload --optimize --classmap-authoritative
+
+COPY . /var/www/html/
 
 COPY docker/php/php.ini /usr/local/etc/php/php.ini
 COPY docker/php/php-fpm.conf /usr/local/etc/php-fpm.d/www.conf
