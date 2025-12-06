@@ -184,18 +184,29 @@ class SyncAds extends Command
         }
         $pathOnly = trim($pathOnly, '/');
         
-        // Get the last segment of the current URL path to check for duplicates
+        // Get all segments of the current URL path to check for duplicates
         $urlPathSegments = !empty($pathOnly) ? explode('/', $pathOnly) : [];
-        $lastUrlSegment = !empty($urlPathSegments) ? end($urlPathSegments) : null;
         
-        // Filter out path parts that duplicate the last segment of the URL
+        // Filter out path parts that already exist in the URL path
         // Also prevent consecutive duplicates within the path parts
         $filteredPathParts = [];
+        $lastAddedPart = null;
         foreach ($urlPathParts as $pathPart) {
-            if ($pathPart !== $lastUrlSegment && !empty($pathPart)) {
+            if (empty($pathPart)) {
+                continue;
+            }
+            
+            // Check if this path part already exists in the base URL path
+            $existsInBasePath = in_array($pathPart, $urlPathSegments, true);
+            
+            // Check if this path part is the same as the last added part (consecutive duplicate)
+            $isConsecutiveDuplicate = $pathPart === $lastAddedPart;
+            
+            if (!$existsInBasePath && !$isConsecutiveDuplicate) {
                 $filteredPathParts[] = $pathPart;
-                // Update lastUrlSegment for next iteration to prevent consecutive duplicates
-                $lastUrlSegment = $pathPart;
+                $lastAddedPart = $pathPart;
+                // Also add to segments array to check against future parts
+                $urlPathSegments[] = $pathPart;
             }
         }
         
