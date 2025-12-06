@@ -47,7 +47,7 @@ class SyncAds extends Command
             return 0;
         }
 
-        $this->info("Found {$notifications->count()} active notification(s).");
+        Log::channel('worker')->info("Found {$notifications->count()} active notification(s).");
 
         foreach ($notifications as $notification) {
             try {
@@ -68,7 +68,7 @@ class SyncAds extends Command
 
     private function processNotification(AdNotification $notification)
     {
-        $this->info("Processing notification: {$notification->name} (ID: {$notification->id})");
+        Log::channel('worker')->info("Processing notification: {$notification->name} (ID: {$notification->id})");
 
         $category = $notification->category;
         if (!$category) {
@@ -134,8 +134,8 @@ class SyncAds extends Command
             $urlPath .= '/' . implode('/', $urlPathParts);
         }
         
-        $this->info("Built URL (for initial GET): {$urlPath}");
-        $this->info("Form params: " . json_encode($formParams));
+        Log::channel('worker')->info("Built URL (for initial GET): {$urlPath}");
+        Log::channel('worker')->info("Form params: " . json_encode($formParams));
 
         $pageResponse = $this->executeQuery($urlPath, $formParams, $notification, $urlPathParts);
         
