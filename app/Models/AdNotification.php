@@ -95,9 +95,7 @@ class AdNotification extends Model
         $filterId = $filterData['filter_id'];
         $value = $filterData['value'] ?? null;
 
-        // Check if this is a range filter (has 'from' and/or 'to' keys)
         if (is_array($value) && (isset($value['from']) || isset($value['to']))) {
-            // Range filter - create separate records for 'from' and 'to' values
             if (isset($value['from']['value']) && $value['from']['value'] !== null && $value['from']['value'] !== '') {
                 AdNotificationFilter::create([
                     'ad_notification_id' => $this->id,
@@ -105,7 +103,7 @@ class AdNotification extends Model
                     'filter_id' => $filterId,
                     'value' => (string) $value['from']['value'],
                     'filter_value_id' => $value['from']['filter_value_id'] ?? null,
-                    'is_min' => true, // 'from' is the minimum value
+                    'is_min' => true,
                 ]);
             }
 
@@ -116,11 +114,10 @@ class AdNotification extends Model
                     'filter_id' => $filterId,
                     'value' => (string) $value['to']['value'],
                     'filter_value_id' => $value['to']['filter_value_id'] ?? null,
-                    'is_min' => false, // 'to' is the maximum value
+                    'is_min' => false,
                 ]);
             }
         } else {
-            // Single value filter
             $stringValue = is_string($value) ? $value : (string) $value;
             
             if ($stringValue !== null && $stringValue !== '') {
@@ -130,7 +127,7 @@ class AdNotification extends Model
                     'filter_id' => $filterId,
                     'value' => $stringValue,
                     'filter_value_id' => $filterData['filter_value_id'] ?? null,
-                    'is_min' => null, // Single value, not a range
+                    'is_min' => null,
                 ]);
             }
         }

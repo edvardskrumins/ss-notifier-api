@@ -124,40 +124,6 @@ class CrawlPages extends Command
         $this->info("Crawling completed! Total execution time: {$duration}");
     }
 
-
-    /**
-     * Extract page title from crawler
-     */
-    private function extractPageTitle(Crawler $crawler): string
-    {
-        $breadcrumbElement = $crawler->filter('h2.headtitle');
-        if ($breadcrumbElement->count() > 0) {
-            $breadcrumbText = $breadcrumbElement->text();
-            
-            // Split by / and get the last part
-            $parts = explode(' / ', $breadcrumbText);
-            if (count($parts) > 1) {
-                $lastPart = trim(end($parts));
-                // Remove any trailing text after the main title like img tags
-                $lastPart = preg_replace('/\s+<.*$/', '', $lastPart);
-                if (!empty($lastPart)) {
-                    return $lastPart;
-                }
-            }
-        }
-        
-        // Fallback to HTML title tag
-        $titleElement = $crawler->filter('title');
-        if ($titleElement->count() > 0) {
-            $title = $titleElement->text();
-            if (!empty($title)) {
-                return $title;
-            }
-        }
-        
-        return 'Unknown Title';
-    }
-
     private function scrapeHomePage()
     {
         $response = $this->makeRequestWithRetry($this->baseUrl . '/' . $this->locale);
@@ -221,7 +187,6 @@ class CrawlPages extends Command
         if ($this->isInTransportSparePartSection($url)) {
             $sparePartsDepth = $this->getSparePartsDepth($url);
             if ($sparePartsDepth == 2) {
-                // Check if this is a generic spare parts category that should be processed normally
                 $isGenericCategory = $this->isGenericSparePartsCategory($url);
                 
                 if ($isGenericCategory) {
@@ -233,7 +198,6 @@ class CrawlPages extends Command
                     $this->info("  -> Generating spare parts categories for: {$url}");
                     $this->generateSparePartsCategoriesForUrl($this->baseUrl . $url, $parentId);
                     
-                    // Remove current URL from path before returning
                     array_pop($this->urlPath);
                     array_pop($this->pathKeys);
                     return null;
@@ -604,137 +568,6 @@ class CrawlPages extends Command
 
 
          return $filters;
-    }
-
-
-    private function getHardcodedRegionOptions(): array
-    {
-        return [
-            [
-                'value' => '0',
-                'text' => 'Visi sludinājumi',
-            ],
-            [
-                'value' => 'riga_f',
-                'text' => 'Rīga',
-            ],
-            [
-                'value' => 'yurmala_f',
-                'text' => 'Jūrmala',
-            ],
-            [
-                'value' => 'riga_region_f',
-                'text' => 'Rīgas rajons',
-            ],
-            [
-                'value' => 'aizkraukle_f',
-                'text' => 'Aizkraukle un raj.',
-            ],
-            [
-                'value' => 'aluksne_f',
-                'text' => 'Alūksne un raj.',
-            ],
-            [
-                'value' => 'balvi_f',
-                'text' => 'Balvi un raj.',
-            ],
-            [
-                'value' => 'bauska_f',
-                'text' => 'Bauska un raj.',
-            ],
-            [
-                'value' => 'cesis_f',
-                'text' => 'Cēsis un raj.',
-            ],
-            [
-                'value' => 'daugavpils_f',
-                'text' => 'Daugavpils un raj.',
-            ],
-            [
-                'value' => 'dobele_f',
-                'text' => 'Dobele un raj.',
-            ],
-            [
-                'value' => 'gulbene_f',
-                'text' => 'Gulbene un raj.',
-            ],
-            [
-                'value' => 'jekabpils_f',
-                'text' => 'Jēkabpils un raj.',
-            ],
-            [
-                'value' => 'jelgava_f',
-                'text' => 'Jelgava un raj.',
-            ],
-            [
-                'value' => 'kraslava_f',
-                'text' => 'Krāslava un raj.',
-            ],
-            [
-                'value' => 'kuldiga_f',
-                'text' => 'Kuldīga un raj.',
-            ],
-            [
-                'value' => 'liepaja_f',
-                'text' => 'Liepāja un raj.',
-            ],
-            [
-                'value' => 'limbadzi_f',
-                'text' => 'Limbaži un raj.',
-            ],
-            [
-                'value' => 'ludza_f',
-                'text' => 'Ludza un raj.',
-            ],
-            [
-                'value' => 'madona_f',
-                'text' => 'Madona un raj.',
-            ],
-            [
-                'value' => 'ogre_f',
-                'text' => 'Ogre un raj.',
-            ],
-            [
-                'value' => 'preili_f',
-                'text' => 'Preiļi un raj.',
-            ],
-            [
-                'value' => 'rezekne_f',
-                'text' => 'Rēzekne un raj.',
-            ],
-            [
-                'value' => 'saldus_f',
-                'text' => 'Saldus un raj.',
-            ],
-            [
-                'value' => 'talsi_f',
-                'text' => 'Talsi un raj.',
-            ],
-            [
-                'value' => 'tukums_f',
-                'text' => 'Tukums un raj.',
-            ],
-            [
-                'value' => 'valka_f',
-                'text' => 'Valka un raj.',
-            ],
-            [
-                'value' => 'valmiera_f',
-                'text' => 'Valmiera un raj.',
-            ],
-            [
-                'value' => 'ventspils_f',
-                'text' => 'Ventspils un raj.',
-            ],
-            [
-                'value' => 'estonia_f',
-                'text' => 'Igaunija',
-            ],
-            [
-                'value' => 'lithuania_f',
-                'text' => 'Lietuva',
-            ]
-        ];
     }
 
     private function hasIgnoredClass(Crawler $select): bool

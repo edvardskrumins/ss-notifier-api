@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Models\AdNotification;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 
 class UpdateAdNotificationRequest extends FormRequest
 {
@@ -13,9 +14,8 @@ class UpdateAdNotificationRequest extends FormRequest
     public function authorize(): bool
     {
         $adNotification = $this->route('adNotification');
-        
         return $adNotification instanceof AdNotification 
-            && $this->user()->id === $adNotification->user_id;
+            && Gate::allows('update', $adNotification);
     }
 
     /**
